@@ -37,7 +37,7 @@ const SeatingArrangement = () => {
 
     // fallback: find alphanumeric token (letters+digits) length >=6
     for (const t of tokens) {
-      if (/^(?=.*\d)(?=.*[A-Za-z])[A-Za-z0-9\-]{6,}$/.test(t)) return t;
+      if (/^(?=.*\d)(?=.*[A-Za-z])[A-Za-z0-9-]{6,}$/.test(t)) return t;
     }
 
     // nothing match
