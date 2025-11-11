@@ -1,0 +1,33 @@
+.seating-page-container {
+  display: flex;
+  flex-wrap: wrap; 
+  gap: 2rem; 
+  padding: 1rem; 
+  color: #fff; 
+}
+
+.create-plan-section,
+.view-plans-section {
+  flex: 1; 
+  min-width: 400px; 
+}
+
+.plans-list {
+  background-color: #2a2a3e; /* Adjust dark color as needed */
+  border-radius: 8px;
+  padding: 1rem;
+  min-height: 200px;
+}
+
+.empty-state {
+  border: 2px dashed #444; 
+  padding: 2rem;
+  border-radius: 8px;
+  text-align: center;
+  color: #888; 
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 1rem;
+}

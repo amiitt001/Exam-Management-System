@@ -1,0 +1,42 @@
+/* App CSS is migrated to Tailwind. Keep minimal fallback for legacy selectors if needed. */
+/* If you need to add small overrides for browsers or legacy selectors, add them here. */
+.room-input {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+  align-items: center;
+}
+
+.room-input input[type="text"] {
+  flex-grow: 2;
+}
+.room-input input[type="number"] {
+  flex-grow: 1;
+}
+
+.remove-btn, .add-btn {
+  padding: 0.5rem 0.8rem;
+  font-size: 0.9rem;
+  background-color: #ff6b6b;
+  min-width: 40px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  color: white;
+}
+
+.add-btn {
+  background-color: #61dafb;
+  width: 100%;
+  margin-top: 10px;
+  color: #282c34;
+  font-weight: bold;
+}
+
+.add-btn:hover {
+   background-color: #21a1c4;
+}
+
+.remove-btn:hover {
+  background-color: #d94848;
+}

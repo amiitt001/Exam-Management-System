@@ -1,28 +1,32 @@
-import "./App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
+// 1. Import styles
+import './styles/App.css';
 
+// 2. Import Layout
+import Layout from './components/layout/Layout';
 
-import Layout from "./components/Layout";
-import Dashboard from "./components/Dashboard";
-import ExamPaperGenerator from "./components/ExamPaperGenerator";
-import SeatingArrangement from "./components/SeatingArrangement";
-import InvigilatorAllocation from "./components/InvigilatorAllocation";
-import ExamSchedule from "./components/ExamSchedule";
+// 3. Import Pages
+import Dashboard from './pages/Dashboard';
+import ExamPaperGenerator from './pages/ExamPaperGenerator';
+import SeatingArrangement from './pages/SeatingArrangement';
+import InvigilatorAllocation from './pages/InvigilatorAllocation';
+import ExamSchedule from './pages/ExamSchedule';
 
 function App() {
   return (
-    <BrowserRouter>
+    <Router>
       <Layout>
         <Routes>
           <Route path="/" element={<Dashboard />} />
-          <Route path="/generator" element={<ExamPaperGenerator />} />
+          <Route path="/generate-paper" element={<ExamPaperGenerator />} />
           <Route path="/seating" element={<SeatingArrangement />} />
-          <Route path="/invigilation" element={<InvigilatorAllocation />} />
+          <Route path="/invigilator" element={<InvigilatorAllocation />} />
           <Route path="/schedule" element={<ExamSchedule />} />
         </Routes>
       </Layout>
-    </BrowserRouter>
+    </Router>
   );
 }
 
