@@ -1,20 +1,20 @@
 const express = require('express');
 const router = express.Router();
 
-// 1. Import the controller functions
 const {
   generateSeatingPlan,
   getSeatingPlans,
   downloadSeatingPlanPDF
 } = require('../controllers/seatingController');
 
+// Export a function that takes 'upload'
 module.exports = (upload) => {
-  // Use 'upload.single("studentFile")' to tell this route
-  // to expect one file named "studentFile"
+  // Apply 'upload.single()' middleware ONLY to the generation route
   router.post('/generate-seating', upload.single('studentFile'), generateSeatingPlan);
 
+  // Other routes are unchanged
   router.get('/seating-plans', getSeatingPlans);
   router.get('/seating-plan-pdf/:planId', downloadSeatingPlanPDF);
 
   return router;
-}
+};

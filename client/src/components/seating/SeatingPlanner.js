@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-
-// --- CORRECTED IMPORT ---
-// Assuming this form uses styles from your main App.css
-import '../../styles/App.css'; 
+import '../../styles/App.css'; // Assuming styles are here
 
 function SeatingPlanner({ onPlanCreated }) { 
-  const [studentList, setStudentList] = useState("R001\nR002\nR003");
+  const [studentFile, setStudentFile] = useState(null); 
+  // --- STATE IS BACK TO 'capacity' ---
   const [rooms, setRooms] = useState([
-    { name: 'Room 101', capacity: 2 }
+    { name: 'D-007', capacity: 30 },
+    { name: 'D-008', capacity: 30 }
   ]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // --- UPDATED to handle 'capacity' ---
   const handleRoomChange = (index, field, value) => {
     const updatedRooms = [...rooms];
     updatedRooms[index][field] = value;
@@ -20,34 +20,50 @@ function SeatingPlanner({ onPlanCreated }) {
   };
 
   const addRoom = () => {
-    setRooms([...rooms, { name: '', capacity: 10 }]);
+    // Add a new room with default 'capacity'
+    setRooms([...rooms, { name: '', capacity: 30 }]);
   };
 
   const removeRoom = (index) => {
     const updatedRooms = rooms.filter((_, i) => i !== index);
     setRooms(updatedRooms);
   };
+  
+  const handleFileChange = (e) => {
+    setStudentFile(e.target.files[0]);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!studentFile) {
+      setError("Please upload a student file.");
+      return;
+    }
     setLoading(true);
     setError(null);
 
-    const students = studentList.split('\n').filter(student => student.trim() !== '');
+    const formData = new FormData();
+    formData.append('studentFile', studentFile);
+    
+    // --- UPDATED to send 'capacity' ---
     const validRooms = rooms.filter(room => room.name.trim() !== '' && room.capacity > 0);
+    formData.append('roomList', JSON.stringify(validRooms));
 
     try {
       const response = await axios.post(
         'http://localhost:5000/api/generate-seating',
-        { studentList: students, roomList: validRooms }
+        formData,
+        {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        }
       );
       
       if (response.data.success && onPlanCreated) {
-        onPlanCreated(); // Refresh the list on the parent page
+        onPlanCreated(); 
       }
       
-      setStudentList("");
-      setRooms([{ name: '', capacity: 10 }]);
+      setStudentFile(null); 
+      e.target.reset(); 
 
     } catch (err) {
       console.error(err);
@@ -61,34 +77,37 @@ function SeatingPlanner({ onPlanCreated }) {
     }
   };
 
-  // --- JSX REMAINS THE SAME ---
   return (
     <div className="exam-form"> 
       <form onSubmit={handleSubmit}>
+        
         <div className="form-group">
-          <label>Student Roll Numbers (one per line)</label>
-          <textarea
-            value={studentList}
-            onChange={(e) => setStudentList(e.target.value)}
-            rows={10}
+          <label>Student File (CSV or PDF)</label>
+          <input
+            type="file"
+            accept=".csv, .pdf"
+            onChange={handleFileChange}
             required
+            className="file-input"
           />
+          <small>File must have 'rollNumber', 'branch', and 'year'/'semester' columns.</small>
         </div>
 
         <div className="form-group">
           <label>Available Rooms</label>
           {rooms.map((room, index) => (
+            // --- UPDATED room inputs ---
             <div key={index} className="room-input">
               <input
                 type="text"
-                placeholder="Room Name (e.g., 101)"
+                placeholder="Room Name (e.g., D-007)"
                 value={room.name}
                 onChange={(e) => handleRoomChange(index, 'name', e.target.value)}
                 required
               />
               <input
                 type="number"
-                placeholder="Capacity"
+                placeholder="Capacity (Total Seats)"
                 value={room.capacity}
                 onChange={(e) => handleRoomChange(index, 'capacity', e.target.value)}
                 min="1"
