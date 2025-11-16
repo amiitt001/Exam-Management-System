@@ -1,76 +1,82 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import '../../styles/App.css'; // Assuming styles are here
+import '../../styles/App.css'; 
 
-function SeatingPlanner({ onPlanCreated }) { 
+function SeatingPlanner() { 
   const [studentFile, setStudentFile] = useState(null); 
-  // --- STATE IS BACK TO 'capacity' ---
-  const [rooms, setRooms] = useState([
-    { name: 'D-007', capacity: 30 },
-    { name: 'D-008', capacity: 30 }
-  ]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
 
-  // --- UPDATED to handle 'capacity' ---
-  const handleRoomChange = (index, field, value) => {
-    const updatedRooms = [...rooms];
-    updatedRooms[index][field] = value;
-    setRooms(updatedRooms);
+  // --- Drag-and-Drop Handlers ---
+  const handleDragOver = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); };
+  const handleDragLeave = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); };
+  const handleDrop = (e) => {
+    e.preventDefault(); e.stopPropagation(); setIsDragging(false);
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      setStudentFile(files[0]);
+      setError(null);
+    }
   };
-
-  const addRoom = () => {
-    // Add a new room with default 'capacity'
-    setRooms([...rooms, { name: '', capacity: 30 }]);
-  };
-
-  const removeRoom = (index) => {
-    const updatedRooms = rooms.filter((_, i) => i !== index);
-    setRooms(updatedRooms);
+  const handleFileChange = (e) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      setStudentFile(files[0]);
+      setError(null);
+    }
   };
   
-  const handleFileChange = (e) => {
-    setStudentFile(e.target.files[0]);
-  };
-
+  // --- UPDATED handleSubmit ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!studentFile) {
-      setError("Please upload a student file.");
+      setError("Please upload a master seating plan file.");
       return;
     }
     setLoading(true);
     setError(null);
 
     const formData = new FormData();
-    formData.append('studentFile', studentFile);
-    
-    // --- UPDATED to send 'capacity' ---
-    const validRooms = rooms.filter(room => room.name.trim() !== '' && room.capacity > 0);
-    formData.append('roomList', JSON.stringify(validRooms));
+    formData.append('seatingPlanFile', studentFile);
+    formData.append('mimetype', studentFile.type); // Send mimetype
 
     try {
+      // --- Call the new "convert-to-pdf" endpoint ---
       const response = await axios.post(
-        'http://localhost:5000/api/generate-seating',
+        'http://localhost:5000/api/convert-to-pdf', // <-- UPDATED
         formData,
         {
-          headers: { 'Content-Type': 'multipart/form-data' }
+          headers: { 'Content-Type': 'multipart/form-data' },
+          responseType: 'blob' // <-- We expect a PDF back
         }
       );
       
-      if (response.data.success && onPlanCreated) {
-        onPlanCreated(); 
-      }
-      
+      // --- Handle the PDF download directly ---
+      const file = new Blob([response.data], { type: 'application/pdf' }); // <-- PDF type
+      const fileURL = URL.createObjectURL(file);
+      const link = document.createElement('a');
+      link.href = fileURL;
+      link.setAttribute('download', `Seating_Plan_Output.pdf`); // <-- .pdf
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+
       setStudentFile(null); 
       e.target.reset(); 
 
     } catch (err) {
       console.error(err);
       if (err.response && err.response.data) {
-        setError(err.response.data.message || "Failed to generate plan.");
+        const errText = await err.response.data.text();
+        try {
+            const errJson = JSON.parse(errText);
+            setError(errJson.message || "Failed to convert file.");
+        } catch {
+             setError(errText || "Failed to convert file.");
+        }
       } else {
-        setError("Failed to generate plan. Check server.");
+        setError("Failed to convert file. Check server.");
       }
     } finally {
       setLoading(false);
@@ -78,53 +84,40 @@ function SeatingPlanner({ onPlanCreated }) {
   };
 
   return (
-    <div className="exam-form"> 
+    <div className="exam-form" style={{ maxWidth: '600px', margin: 'auto' }}> 
+      <h2>Convert Master Plan to PDF</h2>
+      <p style={{ color: '#aaa', marginTop: '-10px' }}>
+        Upload your master Excel file to generate the final, per-room PDF.
+      </p>
       <form onSubmit={handleSubmit}>
         
         <div className="form-group">
-          <label>Student File (CSV or PDF)</label>
-          <input
-            type="file"
-            accept=".csv, .pdf"
-            onChange={handleFileChange}
-            required
-            className="file-input"
-          />
-          <small>File must have 'rollNumber', 'branch', and 'year'/'semester' columns.</small>
-        </div>
-
-        <div className="form-group">
-          <label>Available Rooms</label>
-          {rooms.map((room, index) => (
-            // --- UPDATED room inputs ---
-            <div key={index} className="room-input">
-              <input
-                type="text"
-                placeholder="Room Name (e.g., D-007)"
-                value={room.name}
-                onChange={(e) => handleRoomChange(index, 'name', e.target.value)}
-                required
-              />
-              <input
-                type="number"
-                placeholder="Capacity (Total Seats)"
-                value={room.capacity}
-                onChange={(e) => handleRoomChange(index, 'capacity', e.target.value)}
-                min="1"
-                required
-              />
-              <button type="button" onClick={() => removeRoom(index)} className="remove-btn">
-                X
-              </button>
-            </div>
-          ))}
-          <button type="button" onClick={addRoom} className="add-btn">
-            + Add Room
-          </button>
+          <label>Master Seating File (Excel or CSV)</label>
+          <label 
+            htmlFor="fileInput"
+            className={`dropzone ${isDragging ? 'dropzone-active' : ''}`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
+            <input
+              type="file"
+              accept=".csv, .xls, .xlsx"
+              onChange={handleFileChange}
+              required={!studentFile} 
+              id="fileInput"
+              className="dropzone-input"
+            />
+            {studentFile ? (
+              <p>Selected file: <strong>{studentFile.name}</strong></p>
+            ) : (
+              <p>Drag & drop your file here, or click to select</p>
+            )}
+          </label>
         </div>
 
         <button type="submit" disabled={loading} style={{marginTop: '1rem'}}>
-          {loading ? 'Generating...' : 'Generate Seating Plan'}
+          {loading ? 'Converting...' : 'Convert & Download PDF'} 
         </button>
         {error && <p className="error">{error}</p>}
       </form>

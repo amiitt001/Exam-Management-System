@@ -1,20 +1,14 @@
 const express = require('express');
 const router = express.Router();
 
+// --- We only need the 'convertPlanToPDF' function ---
 const {
-  generateSeatingPlan,
-  getSeatingPlans,
-  downloadSeatingPlanPDF
+  convertPlanToPDF 
 } = require('../controllers/seatingController');
 
-// Export a function that takes 'upload'
 module.exports = (upload) => {
-  // Apply 'upload.single()' middleware ONLY to the generation route
-  router.post('/generate-seating', upload.single('studentFile'), generateSeatingPlan);
-
-  // Other routes are unchanged
-  router.get('/seating-plans', getSeatingPlans);
-  router.get('/seating-plan-pdf/:planId', downloadSeatingPlanPDF);
-
+  // --- The main route for uploading and converting the file ---
+  router.post('/convert-to-pdf', upload.single('seatingPlanFile'), convertPlanToPDF);
+  
   return router;
 };

@@ -1,92 +1,132 @@
-const SeatingPlan = require("../models/SeatingPlan");
-const axios = require('axios');
-const FormData = require('form-data');
-const { Readable } = require('stream');
+const Excel = require("exceljs");
+const axios = require('axios'); // <-- Required
+const FormData = require('form-data'); // <-- Required
 
-// Define the URL for your Python service
-const PYTHON_SERVICE_URL = 'http://localhost:8081'; 
+const PYTHON_SERVICE_URL = 'http://localhost:8081'; // URL for Python service
 
 /**
- * @route   POST /api/generate-seating
- * @desc    Receives file, forwards to Python, saves resulting JSON
+ * @route   POST /api/convert-to-pdf
+ * @desc    Reads master Excel, runs fill logic, sends to Python for PDF
  */
-exports.generateSeatingPlan = async (req, res) => {
+exports.convertPlanToPDF = async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ message: "No student file uploaded." });
+      return res.status(400).json({ message: "No file uploaded." });
     }
 
-    // 1. Create new FormData to send to Python
-    const form = new FormData();
-    form.append('studentFile', req.file.buffer, req.file.originalname);
-    form.append('roomList', req.body.roomList); // Pass the roomList string
+    // 1. Read the uploaded file buffer
+    const wb = new Excel.Workbook();
+    const buffer = req.file.buffer;
+    await wb.xlsx.load(buffer);
 
-    // 2. Call the Python '/process-file' endpoint
-    const response = await axios.post(`${PYTHON_SERVICE_URL}/process-file`, form, {
-      headers: form.getHeaders(),
+    const sheet = wb.worksheets[0];
+    if (!sheet) {
+      return res.status(400).json({ message: "No first sheet found in workbook." });
+    }
+
+    // --- YOUR EXACT LOGIC FROM seating.js ---
+    const headerMap = {};
+    sheet.getRow(1).eachCell((cell, col) => {
+      const key = (cell.value || "").toString().trim().toLowerCase();
+      if (key) headerMap[key] = col;
     });
 
-    // 3. Get the JSON plan back from Python
-    const { planData, studentCount, roomList } = response.data;
+    const colRoll1 = headerMap["roll no. series-1"] || headerMap["roll no series-1"];
+    const colRoll2 = headerMap["roll no. series-2"] || headerMap["roll no series-2"];
+    const colRoom = headerMap["room no."] || headerMap["room no"] || headerMap["room"];
+    const colRow = headerMap["row"] || headerMap["rows"];
+    const colCol = headerMap["column"] || headerMap["columns"] || headerMap["cols"];
+    const colCollege = headerMap["college name"] || headerMap["college"];
+    const colExam = headerMap["exam name"] || headerMap["exam"];
+
+    if (!colRoll1 || !colRoll2) return res.status(400).json({ message: "Input must contain columns for both series." });
+    if (!colRoom) return res.status(400).json({ message: "Input must contain a Room No. column." });
     
-    // 4. Save this plan to our MongoDB
-    const newPlan = await SeatingPlan.create({
-      planData: planData,
-      studentCount: studentCount,
-      roomList: roomList, // This was the parsed room list
-      planName: `Plan - ${new Date().toLocaleString()}`
+    const studentPairs = [];
+    sheet.eachRow((row, rnum) => {
+      if (rnum === 1) return;
+      const v1 = (row.getCell(colRoll1).value || "").toString().trim();
+      const v2 = (row.getCell(colRoll2).value || "").toString().trim();
+      if (v1 || v2) studentPairs.push({ s1: v1, s2: v2 });
     });
 
-    // 5. Respond to the React client
-    res.status(201).json({ success: true, message: "Plan created!", plan: newPlan });
+    const rooms = [];
+    const seenRooms = new Set();
+    sheet.eachRow((row, rnum) => {
+      if (rnum === 1) return;
+      const roomVal = (colRoom ? (row.getCell(colRoom).value || "").toString().trim() : "");
+      const rCountRaw = colRow ? row.getCell(colRow).value : null;
+      const cCountRaw = colCol ? row.getCell(colCol).value : null;
+      const rCount = (typeof rCountRaw === "number" && !Number.isNaN(rCountRaw)) ? Math.floor(rCountRaw) : null;
+      const cCount = (typeof cCountRaw === "number" && !Number.isNaN(cCountRaw)) ? Math.floor(cCountRaw) : null;
+      if (roomVal && rCount && cCount && !seenRooms.has(roomVal)) {
+        seenRooms.add(roomVal);
+        rooms.push({
+          name: roomVal, rows: rCount, cols: cCount,
+          college: colCollege ? (row.getCell(colCollege).value || "").toString() : "Galgotias College",
+          exam: colExam ? (row.getCell(colExam).value || "").toString() : "Exam"
+        });
+      }
+    });
 
-  } catch (error) {
-    console.error(error.response ? error.response.data : error.message);
-    res.status(500).json({ message: "Error generating plan", error: error.message });
-  }
-};
+    if (rooms.length === 0) return res.status(400).json({ message: "No rooms with numeric Row & Column found." });
 
-/**
- * @route   GET /api/seating-plan-pdf/:planId
- * @desc    Fetches plan JSON from DB, forwards to Python to get PDF
- */
-exports.downloadSeatingPlanPDF = async (req, res) => {
-  try {
-    const plan = await SeatingPlan.findById(req.params.planId);
-    if (!plan) {
-      return res.status(404).json({ message: "Plan not found" });
+    let pairIndex = 0;
+    const assigned = {}; // This will hold the data for Python
+    const splitRollBranch = (str) => {
+      if (!str) return { roll: "", branch: "" };
+      const s = String(str).trim();
+      const parts = s.split(/\s+/);
+      const roll = parts[0] || "";
+      const branch = parts.slice(1).join(" ") || "";
+      return { roll, branch };
+    };
+
+    for (const room of rooms) {
+      const capacityPairs = room.rows * room.cols;
+      assigned[room.name] = {
+        pairs: [],
+        summary: new Map()
+      };
+      for (let i = 0; i < capacityPairs && pairIndex < studentPairs.length; i++) {
+        const pair = studentPairs[pairIndex++];
+        assigned[room.name].pairs.push(pair);
+        
+        // Calculate summary
+        const { branch: b1 } = splitRollBranch(pair.s1);
+        const { branch: b2 } = splitRollBranch(pair.s2);
+        if (b1) assigned[room.name].summary.set(b1, (assigned[room.name].summary.get(b1) || 0) + 1);
+        if (b2) assigned[room.name].summary.set(b2, (assigned[room.name].summary.get(b2) || 0) + 1);
+      }
+    }
+    // --- END OF YOUR LOGIC ---
+
+
+    // --- 4. NEW: Send this data to Python ---
+    
+    // Convert Map to plain object for JSON
+    const assignedForJSON = {};
+    for (const roomName in assigned) {
+      assignedForJSON[roomName] = {
+        pairs: assigned[roomName].pairs,
+        summary: Object.fromEntries(assigned[roomName].summary) // Convert Map to object
+      };
     }
 
-    // 1. Call the Python '/generate-pdf' endpoint
-    // We only need to send 'planData'. The room layout info
-    // is already stored inside it from the 'generate' step.
-    const response = await axios.post(`${PYTHON_SERVICE_URL}/generate-pdf`, {
-      planData: plan.planData 
+    const pythonResponse = await axios.post(`${PYTHON_SERVICE_URL}/generate-pdf-from-logic`, {
+      rooms: rooms,
+      assignedData: assignedForJSON
     }, {
-      responseType: 'stream' // We expect a PDF stream back
+      responseType: 'stream'
     });
 
-    // 2. Stream the PDF from the Python service directly to the user
+    // --- 5. Stream the final PDF back to the user ---
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename=Seating_Plan_${plan._id}.pdf`);
-    response.data.pipe(res);
+    res.setHeader('Content-Disposition', 'attachment; filename=Seating_Plan.pdf');
+    pythonResponse.data.pipe(res);
 
-  } catch (error)
- {
-    console.error(error.response ? error.response.data : error.message);
-    res.status(500).json({ message: "Error generating PDF", error: error.message });
-  }
-};
-
-/**
- * @route   GET /api/seating-plans
- * @desc    Fetches all saved seating plans (No change)
- */
-exports.getSeatingPlans = async (req, res) => {
-  try {
-    const plans = await SeatingPlan.find().sort({ createdAt: -1 });
-    res.json(plans);
   } catch (error) {
-     res.status(500).json({ message: "Error fetching plans", error: error.message });
+    console.error(error.response ? error.response.data : error.message);
+    res.status(500).json({ message: "Error processing file", error: error.message });
   }
 };
