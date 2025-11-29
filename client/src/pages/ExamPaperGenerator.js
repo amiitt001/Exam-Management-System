@@ -13,7 +13,7 @@ const ExamPaperGenerator = () => {
     const format = document.getElementById("format").value;
     const count = document.getElementById("count").value;
 
-    const response = await fetch("http://localhost:5000/api/generate-paper", {
+    const response = await fetch(`${process.env.REACT_APP_API_URL}/api/generate-paper`, {
 
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -27,7 +27,7 @@ const ExamPaperGenerator = () => {
 
   // ✅ Download PDF after saving edits
   const downloadPDF = async () => {
-    const response = await fetch("http://localhost:5000/api/generate-paper-pdf", {
+    const response = await fetch(`${process.env.REACT_APP_API_URL}/api/generate-paper-pdf`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ questions: paper.questions })
@@ -49,7 +49,7 @@ const ExamPaperGenerator = () => {
       </h2>
 
       <div className="bg-slate-800/40 p-6 rounded-xl border border-slate-700">
-        
+
         {/* INPUT FORM */}
         <label>Syllabus / Topics</label>
         <textarea
@@ -59,7 +59,7 @@ const ExamPaperGenerator = () => {
         />
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-          
+
           <div>
             <label>Difficulty</label>
             <select id="difficulty" className="w-full bg-slate-900 p-3 rounded-md border border-slate-700 mt-2">

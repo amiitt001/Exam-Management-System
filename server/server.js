@@ -9,7 +9,7 @@ const paperRoutes = require('./routes/paperRoutes');
 const seatingRoutes = require('./routes/seatingRoutes'); // This is now a function
 
 const app = express();
-const port = 5000;
+const port = process.env.PORT || 5000;
 
 // Connect to DB
 mongoose.connect(process.env.MONGO_URI || "...")

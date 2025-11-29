@@ -8,11 +8,11 @@ const InvigilatorAllocation = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const parseInvigilators = (text) => text.split('\n').map(s=>s.trim()).filter(Boolean).map((name, i)=>({ id:`I${i+1}`, name }));
+  const parseInvigilators = (text) => text.split('\n').map(s => s.trim()).filter(Boolean).map((name, i) => ({ id: `I${i + 1}`, name }));
   // Parse sessions: ExamId:Room:Time
-  const parseSessions = (text) => text.split('\n').map(s=>s.trim()).filter(Boolean).map((line, i)=>{
-    const parts = line.split(':').map(p=>p.trim());
-    return { id: `S${i+1}`, exam: parts[0]||`Exam${i+1}`, room: parts[1]||'RoomX', time: parts[2]||'' };
+  const parseSessions = (text) => text.split('\n').map(s => s.trim()).filter(Boolean).map((line, i) => {
+    const parts = line.split(':').map(p => p.trim());
+    return { id: `S${i + 1}`, exam: parts[0] || `Exam${i + 1}`, room: parts[1] || 'RoomX', time: parts[2] || '' };
   });
 
   const handleAssign = async (e) => {
@@ -26,7 +26,7 @@ const InvigilatorAllocation = () => {
 
     setLoading(true);
     try {
-      const resp = await axios.post('http://localhost:5000/api/assign-invigilators-mock', { invigilators, sessions });
+      const resp = await axios.post(`${process.env.REACT_APP_API_URL}/api/assign-invigilators-mock`, { invigilators, sessions });
       setAssignments(resp.data);
     } catch (err) {
       setError(err.response?.data?.message || err.message);
@@ -41,12 +41,12 @@ const InvigilatorAllocation = () => {
       <form onSubmit={handleAssign} className="space-y-4 max-w-3xl">
         <div>
           <label className="block text-sm font-medium text-gray-300">Invigilators (one per line)</label>
-          <textarea value={invigilatorsText} onChange={e=>setInvigilatorsText(e.target.value)} rows={6} className="mt-2 w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm" placeholder="Dr. A\nProf. B\nMs. C" />
+          <textarea value={invigilatorsText} onChange={e => setInvigilatorsText(e.target.value)} rows={6} className="mt-2 w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm" placeholder="Dr. A\nProf. B\nMs. C" />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-300">Sessions (one per line as Exam:Room:Time)</label>
-          <textarea value={sessionsText} onChange={e=>setSessionsText(e.target.value)} rows={6} className="mt-2 w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm" placeholder="Exam1:RoomA:09:00-11:00\nExam2:RoomB:12:00-14:00" />
+          <textarea value={sessionsText} onChange={e => setSessionsText(e.target.value)} rows={6} className="mt-2 w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm" placeholder="Exam1:RoomA:09:00-11:00\nExam2:RoomB:12:00-14:00" />
         </div>
 
         <div>
@@ -57,10 +57,10 @@ const InvigilatorAllocation = () => {
         </div>
       </form>
 
-      {error && <div style={{color:'red', marginTop:12}}>Error: {error}</div>}
+      {error && <div style={{ color: 'red', marginTop: 12 }}>Error: {error}</div>}
 
       {assignments && (
-        <div style={{marginTop:20, textAlign:'left'}}>
+        <div style={{ marginTop: 20, textAlign: 'left' }}>
           <h3>Assignments (by session)</h3>
           {/* Normalize to session-centric view whether API returned sessions or invigilator map */}
           {(() => {
@@ -86,7 +86,7 @@ const InvigilatorAllocation = () => {
             return (
               <div>
                 {sessionsView.map((s, idx) => (
-                  <div key={s.id} className="opacity-0 animate-fade-up" style={{animationDelay:`${idx*30}ms`, marginBottom:12}}>
+                  <div key={s.id} className="opacity-0 animate-fade-up" style={{ animationDelay: `${idx * 30}ms`, marginBottom: 12 }}>
                     <strong>{s.exam}</strong> — {s.room} <em>({s.time})</em>
                     <div>Assigned invigilators:</div>
                     {s.assigned && s.assigned.length > 0 ? (
