@@ -9,10 +9,10 @@ on:
   workflow_dispatch:
 
 env:
-  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  REGION: ${{ secrets.GCP_REGION }}
-  REPOSITORY: ${{ secrets.GAR_REPO }}
-  SERVICE: ${{ secrets.CLOUD_RUN_PY_SERVICE }}
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID || '' }}
+  REGION: ${{ secrets.GCP_REGION || '' }}
+  REPOSITORY: ${{ secrets.GAR_REPO || '' }}
+  SERVICE: ${{ secrets.CLOUD_RUN_PY_SERVICE || '' }}
   IMAGE_NAME: exam-generator-python
 
 jobs:

@@ -45,7 +45,7 @@ function SeatingPlanner() {
       formData.append('seatingPlanFile', studentFile);
 
       // Call backend to preview seating plan
-      const previewRes = await axios.post(process.env.REACT_APP_API_URL + '/api/preview-seating-plan', formData, {
+      const previewRes = await axios.post(process.env.REACT_APP_API_URL + '/preview-seating-plan', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
@@ -81,7 +81,7 @@ function SeatingPlanner() {
       formData.append('previewData', dataBlob, 'preview.json');
 
       const response = await axios.post(
-        process.env.REACT_APP_API_URL + '/api/convert-to-pdf',
+        process.env.REACT_APP_API_URL + '/convert-to-pdf',
         formData,
         {
           responseType: 'blob',
