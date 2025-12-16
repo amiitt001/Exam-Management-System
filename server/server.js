@@ -28,6 +28,11 @@ app.use(express.json());
 app.use('/api', paperRoutes);
 app.use('/api', seatingRoutes(upload)); // <-- Pass 'upload' here
 
+// Lightweight health check for uptime and container diagnostics
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
 // Start server
 app.listen(port, () => {
   console.log(`✅ Server running at http://localhost:${port}`);

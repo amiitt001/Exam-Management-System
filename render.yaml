@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: exam-generator-api
+    env: node
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: MONGO_URI
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: PYTHON_SERVICE_URL
+        sync: false
+      - key: NODE_VERSION
+        value: 18
+
+  - type: web
+    name: exam-generator-python
+    env: python
+    rootDir: python-service
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
+    envVars:
+      - key: FLASK_DEBUG
+        value: "0"
