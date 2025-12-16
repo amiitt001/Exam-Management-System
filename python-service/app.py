@@ -514,25 +514,36 @@ def generate_pdf_from_logic():
 @app.route('/preview-allocation', methods=['POST'])
 def preview_allocation():
     """Runs allocation on supplied students/rooms and returns preview data."""
-    payload = request.get_json(silent=True) or {}
-    pattern = payload.get('pattern', 'standard')
-    students = payload.get('students', [])
-    rooms = payload.get('rooms', [])
-
     try:
+        payload = request.get_json(silent=True) or {}
+        pattern = payload.get('pattern', 'standard')
+        students = payload.get('students', [])
+        rooms = payload.get('rooms', [])
+
+        # Add validation
+        if not students or not rooms:
+            return jsonify({"error": "Missing students or rooms data"}), 400
+
+        # Add 'id' field if missing
+        for i, student in enumerate(students):
+            if 'id' not in student:
+                student['id'] = i
+
         processed_rooms, unallocated = generate_seating_plan(students, rooms, pattern)
         assigned_data = convert_grid_to_assigned_data(processed_rooms)
 
         unallocated_for_display = []
         for student in unallocated:
-            details = split_roll_branch(student.get('val', ''))
+            # Fix: student has 'val' key from generate_seating_plan
+            val = student.get('val', '')
+            details = split_roll_branch(val)
             unallocated_for_display.append({
                 'roll': details['roll'],
                 'branch': details['branch'],
                 'orig': student.get('orig', '')
             })
 
-        # Mirror structure expected by the Node preview endpoint
+        # Calculate total students
         total_students = 0
         for student in students:
             if student.get('s1'): total_students += 1
@@ -544,11 +555,17 @@ def preview_allocation():
             "unallocated": unallocated_for_display,
             "total_students": total_students
         }), 200
+        
+    except KeyError as e:
+        print(f"Preview allocation KeyError: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": f"Missing required field: {str(e)}"}), 400
     except Exception as e:
         print(f"Preview allocation error: {e}")
-        return jsonify({"error": "Allocation failed."}), 500
-
-
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": f"Allocation failed: {str(e)}"}), 500
 @app.route('/health', methods=['GET'])
 def health():
     return jsonify({"status": "ok"}), 200
