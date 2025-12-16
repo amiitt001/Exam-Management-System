@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-const mongoose = require("mongoose");
+// Using Firestore; MongoDB removed
 const multer = require('multer'); // <-- Make sure multer is required
 
 // Import your routes
@@ -11,10 +11,7 @@ const seatingRoutes = require('./routes/seatingRoutes'); // This is now a functi
 const app = express();
 const port = process.env.PORT || 5000;
 
-// Connect to DB
-mongoose.connect(process.env.MONGO_URI || "...")
-  .then(() => console.log("✅ MongoDB Connected"))
-  .catch(err => console.log("❌ DB error:", err));
+console.log("✅ Using Firestore as datastore");
 
 // --- Multer Configuration ---
 const storage = multer.memoryStorage();

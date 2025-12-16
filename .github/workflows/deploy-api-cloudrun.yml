@@ -1,0 +1,81 @@
+name: Deploy Node API to Cloud Run
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'server/**'
+      - '.github/workflows/deploy-api-cloudrun.yml'
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: ${{ secrets.GCP_REGION }}
+  REPOSITORY: ${{ secrets.GAR_REPO }}
+  SERVICE: ${{ secrets.CLOUD_RUN_API_SERVICE }}
+  IMAGE_NAME: exam-generator-api
+
+jobs:
+  deploy:
+    name: Build and Deploy Node API
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    concurrency:
+      group: deploy-api-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.SERVICE_ACCOUNT_EMAIL }}
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker auth for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Build container
+        run: |
+          IMAGE_URI=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
+          docker build -t $IMAGE_URI -f server/Dockerfile server
+
+      - name: Push container
+        run: docker push $IMAGE_URI
+
+      - name: Deploy to Cloud Run
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          PYTHON_SERVICE_URL: ${{ secrets.PYTHON_SERVICE_URL }}
+          GCS_BUCKET: ${{ secrets.GCS_BUCKET }}
+          USE_FIRESTORE: ${{ secrets.USE_FIRESTORE }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
+          FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+        run: |
+          SERVICE_NAME=${{ env.SERVICE }}
+          if [ -z "$SERVICE_NAME" ]; then SERVICE_NAME=exam-generator-api; fi
+          # Build env vars list (conditionally include Firestore creds if provided)
+          ENV_VARS="GEMINI_API_KEY=$GEMINI_API_KEY,PYTHON_SERVICE_URL=$PYTHON_SERVICE_URL,USE_FIRESTORE=${USE_FIRESTORE:-true}"
+          if [ -n "$GCS_BUCKET" ]; then
+            ENV_VARS="$ENV_VARS,GCS_BUCKET=$GCS_BUCKET"
+          fi
+          if [ -n "$FIREBASE_PROJECT_ID" ] && [ -n "$FIREBASE_CLIENT_EMAIL" ] && [ -n "$FIREBASE_PRIVATE_KEY" ]; then
+            ENV_VARS="$ENV_VARS,FIREBASE_PROJECT_ID=$FIREBASE_PROJECT_ID,FIREBASE_CLIENT_EMAIL=$FIREBASE_CLIENT_EMAIL,FIREBASE_PRIVATE_KEY=$FIREBASE_PRIVATE_KEY"
+          fi
+          if [ -n "$FIREBASE_SERVICE_ACCOUNT_JSON" ]; then
+            ENV_VARS="$ENV_VARS,FIREBASE_SERVICE_ACCOUNT_JSON=$FIREBASE_SERVICE_ACCOUNT_JSON"
+          fi
+          gcloud run deploy $SERVICE_NAME \
+            --image $IMAGE_URI \
+            --region ${{ env.REGION }} \
+            --allow-unauthenticated \
+            --set-env-vars $ENV_VARS

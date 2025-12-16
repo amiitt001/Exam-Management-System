@@ -1,6 +1,6 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const Paper = require('../models/Paper');
 const PDFDocument = require('pdfkit');
+const { createPaper, listPapers } = require('../repositories/papers');
 
 // Initialize Google AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -30,8 +30,8 @@ exports.generatePaper = async (req, res) => {
     const jsonString = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
     const examData = JSON.parse(jsonString);
 
-    // Save to DB
-    await Paper.create({
+    // Save via repository (Mongo or Firestore)
+    await createPaper({
       subject,
       syllabus,
       difficulty,
@@ -39,7 +39,6 @@ exports.generatePaper = async (req, res) => {
       format,
       questions: examData.questions,
       answerKey: examData.answerKey,
-      createdAt: new Date()
     });
 
     res.status(201).json({ success: true, message: "Paper saved successfully", data: examData });
@@ -54,27 +53,62 @@ exports.generatePaper = async (req, res) => {
  * @route   POST /api/generate-paper-pdf
  * @desc    Takes user-edited JSON questions and returns a PDF
  */
-exports.downloadPaperPDF = (req, res) => {
+exports.downloadPaperPDF = async (req, res) => {
   const { questions } = req.body;
 
   if (!questions || questions.length === 0) {
     return res.status(400).json({ message: "No questions provided" });
   }
 
-  const doc = new PDFDocument();
-  res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", "attachment; filename=ExamPaper.pdf");
-  doc.pipe(res);
+  const bucket = process.env.GCS_BUCKET;
+  if (!bucket) {
+    const doc = new PDFDocument();
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", "attachment; filename=ExamPaper.pdf");
+    doc.pipe(res);
+    doc.fontSize(18).text("Exam Paper", { align: "center" });
+    doc.moveDown(2);
+    questions.forEach((q) => {
+      doc.fontSize(12).text(`${q.number}. ${q.question || q.text}`);
+      doc.moveDown(0.5);
+    });
+    doc.end();
+    return;
+  }
 
+  // Buffer and upload to GCS
+  const chunks = [];
+  const doc = new PDFDocument();
+  doc.on('data', (d) => chunks.push(d));
+  const finished = new Promise((resolve) => doc.on('end', resolve));
   doc.fontSize(18).text("Exam Paper", { align: "center" });
   doc.moveDown(2);
-
   questions.forEach((q) => {
-    doc.fontSize(12).text(`${q.number}. ${q.question || q.text}`); // Use .question or .text
+    doc.fontSize(12).text(`${q.number}. ${q.question || q.text}`);
     doc.moveDown(0.5);
   });
-
   doc.end();
+  await finished;
+  try {
+    const buffer = Buffer.concat(chunks);
+    const { uploadBuffer } = require('../utils/gcs');
+    const ts = Date.now();
+    const url = await uploadBuffer({
+      bucketName: bucket,
+      destination: `papers/ExamPaper_${ts}.pdf`,
+      buffer,
+      contentType: 'application/pdf'
+    });
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", "attachment; filename=ExamPaper.pdf");
+    res.setHeader('X-File-URL', url);
+    res.send(buffer);
+  } catch (e) {
+    console.error('GCS upload failed for paper PDF:', e.message);
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", "attachment; filename=ExamPaper.pdf");
+    res.send(Buffer.concat(chunks));
+  }
 };
 
 /**
@@ -83,7 +117,7 @@ exports.downloadPaperPDF = (req, res) => {
  */
 exports.getPapers = async (req, res) => {
   try {
-    const papers = await Paper.find().sort({ createdAt: -1 });
+    const papers = await listPapers();
     res.json(papers);
   } catch (error) {
     console.error(error);

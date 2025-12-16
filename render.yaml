@@ -6,8 +6,6 @@ services:
     buildCommand: npm install
     startCommand: npm start
     envVars:
-      - key: MONGO_URI
-        sync: false
       - key: GEMINI_API_KEY
         sync: false
       - key: PYTHON_SERVICE_URL

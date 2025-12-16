@@ -65,14 +65,69 @@ const processExcelFile = async (req) => {
 
 exports.convertPlanToPDF = async (req, res) => {
   try {
+    // Optional: upload original Excel to Cloud Storage
+    const bucket = process.env.GCS_BUCKET;
+    if (bucket && req.file && req.file.buffer) {
+      try {
+        const { uploadBuffer } = require('../utils/gcs');
+        const ts = Date.now();
+        const original = (req.file.originalname || 'seating.xlsx').replace(/[^a-zA-Z0-9._-]/g, '_');
+        const inputUrl = await uploadBuffer({
+          bucketName: bucket,
+          destination: `inputs/${ts}_${original}`,
+          buffer: req.file.buffer,
+          contentType: req.file.mimetype || 'application/octet-stream'
+        });
+        res.setHeader('X-Input-URL', inputUrl);
+      } catch (e) {
+        console.error('GCS input upload failed:', e.message);
+      }
+    }
+
     const data = await processExcelFile(req);
     // Send raw data to Python to handle allocation and PDF generation
     const pythonResponse = await axios.post(`${PYTHON_SERVICE_URL}/generate-pdf-from-raw`, data, {
       responseType: 'stream'
     });
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename=Seating_Plan.pdf');
-    pythonResponse.data.pipe(res);
+
+    // If GCS bucket configured, upload PDF output too
+    const bucketOut = process.env.GCS_BUCKET;
+    if (!bucketOut) {
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'attachment; filename=Seating_Plan.pdf');
+      pythonResponse.data.pipe(res);
+      return;
+    }
+
+    // If GCS_BUCKET is set, buffer the stream and upload to GCS
+    const chunks = [];
+    pythonResponse.data.on('data', (d) => chunks.push(d));
+    pythonResponse.data.on('end', async () => {
+      try {
+        const buffer = Buffer.concat(chunks);
+        const { uploadBuffer } = require('../utils/gcs');
+        const ts = Date.now();
+        const url = await uploadBuffer({
+          bucketName: bucketOut,
+          destination: `seating/Seating_Plan_${ts}.pdf`,
+          buffer,
+          contentType: 'application/pdf'
+        });
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename=Seating_Plan.pdf');
+        res.setHeader('X-File-URL', url);
+        res.send(buffer);
+      } catch (e) {
+        console.error('GCS upload failed, streaming directly:', e.message);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename=Seating_Plan.pdf');
+        res.send(Buffer.concat(chunks));
+      }
+    });
+    pythonResponse.data.on('error', (e) => {
+      console.error('Stream error:', e.message);
+      res.status(500).json({ message: 'Error processing file stream' });
+    });
   } catch (error) {
     console.error(error.response ? error.response.data : error.message);
     res.status(500).json({ message: "Error processing file", error: error.message });
@@ -81,6 +136,25 @@ exports.convertPlanToPDF = async (req, res) => {
 
 exports.previewSeatingPlan = async (req, res) => {
   try {
+    // Optional: upload original Excel to Cloud Storage
+    const bucket = process.env.GCS_BUCKET;
+    if (bucket && req.file && req.file.buffer) {
+      try {
+        const { uploadBuffer } = require('../utils/gcs');
+        const ts = Date.now();
+        const original = (req.file.originalname || 'seating.xlsx').replace(/[^a-zA-Z0-9._-]/g, '_');
+        const inputUrl = await uploadBuffer({
+          bucketName: bucket,
+          destination: `inputs/${ts}_${original}`,
+          buffer: req.file.buffer,
+          contentType: req.file.mimetype || 'application/octet-stream'
+        });
+        res.setHeader('X-Input-URL', inputUrl);
+      } catch (e) {
+        console.error('GCS input upload failed:', e.message);
+      }
+    }
+
     const data = await processExcelFile(req);
     // Get allocated data from Python for preview
     const pythonResponse = await axios.post(`${PYTHON_SERVICE_URL}/preview-allocation`, data);
