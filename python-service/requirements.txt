@@ -1,7 +1,5 @@
-flask
-pandas
-pdfplumber
-reportlab
 gunicorn
+flask
+reportlab
 openpyxl
 flask-cors

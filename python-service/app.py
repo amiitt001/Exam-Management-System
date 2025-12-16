@@ -445,12 +445,16 @@ def calculate_seating():
             for r in range(room['rows']):
                 for c in range(room['cols']):
                     desk = room['grid'][r][c]
-                    if desk and desk['left']:
-                        desk['left'] = split_roll_branch(desk['left']['val'])
-                        desk['left']['orig'] = student['orig'] # Keep source data
-                    if desk and desk['right']:
-                        desk['right'] = split_roll_branch(desk['right']['val'])
-                        desk['right']['orig'] = student['orig'] # Keep source data
+                    if desk and desk.get('left'):
+                        left_obj = desk['left']
+                        left_details = split_roll_branch(left_obj.get('val', ''))
+                        left_details['orig'] = left_obj.get('orig', '')
+                        desk['left'] = left_details
+                    if desk and desk.get('right'):
+                        right_obj = desk['right']
+                        right_details = split_roll_branch(right_obj.get('val', ''))
+                        right_details['orig'] = right_obj.get('orig', '')
+                        desk['right'] = right_details
 
         return jsonify({
             "rooms": processed_rooms,
@@ -506,9 +510,53 @@ def generate_pdf_from_logic():
         print(f"PDF Generation Error: {e}")
         return jsonify({"error": str(e)}), 500
 
+
+@app.route('/preview-allocation', methods=['POST'])
+def preview_allocation():
+    """Runs allocation on supplied students/rooms and returns preview data."""
+    payload = request.get_json(silent=True) or {}
+    pattern = payload.get('pattern', 'standard')
+    students = payload.get('students', [])
+    rooms = payload.get('rooms', [])
+
+    try:
+        processed_rooms, unallocated = generate_seating_plan(students, rooms, pattern)
+        assigned_data = convert_grid_to_assigned_data(processed_rooms)
+
+        unallocated_for_display = []
+        for student in unallocated:
+            details = split_roll_branch(student.get('val', ''))
+            unallocated_for_display.append({
+                'roll': details['roll'],
+                'branch': details['branch'],
+                'orig': student.get('orig', '')
+            })
+
+        # Mirror structure expected by the Node preview endpoint
+        total_students = 0
+        for student in students:
+            if student.get('s1'): total_students += 1
+            if student.get('s2'): total_students += 1
+
+        return jsonify({
+            "rooms": processed_rooms,
+            "assignedData": assigned_data,
+            "unallocated": unallocated_for_display,
+            "total_students": total_students
+        }), 200
+    except Exception as e:
+        print(f"Preview allocation error: {e}")
+        return jsonify({"error": "Allocation failed."}), 500
+
+
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({"status": "ok"}), 200
+
 if __name__ == '__main__':
     # Flask runs on port 5000 by default
     print("Starting Flask server on http://127.0.0.1:5000")
     # Set host='0.0.0.0' to be accessible from outside the container/localhost
     port = int(os.environ.get('PORT', 5001))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    debug_mode = os.environ.get('FLASK_DEBUG', '0') == '1'
+    app.run(host='0.0.0.0', port=port, debug=debug_mode)
