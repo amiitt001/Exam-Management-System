@@ -42,19 +42,11 @@ function SeatingPlanner() {
 
     try {
       const formData = new FormData();
-      formData.append('file', studentFile);
+      formData.append('seatingPlanFile', studentFile);
 
-      // 1. Upload File
-      const uploadRes = await axios.post(process.env.REACT_APP_API_URL + '/upload', formData, {
+      // Call backend to preview seating plan
+      const previewRes = await axios.post(process.env.REACT_APP_API_URL + '/api/preview-seating-plan', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
-      });
-
-      const { data_id } = uploadRes.data;
-
-      // 2. Calculate Seating
-      const previewRes = await axios.post(process.env.REACT_APP_API_URL + '/calculate', {
-        data_id,
-        pattern
       });
 
       setPreviewData(previewRes.data);
@@ -82,12 +74,18 @@ function SeatingPlanner() {
     setLoading(true);
     setError(null);
     try {
+      const formData = new FormData();
+      // Serialize the preview data back to a file-like object or send as-is
+      // For now, we'll create a new FormData with the edited data
+      const dataBlob = new Blob([JSON.stringify(previewData)], { type: 'application/json' });
+      formData.append('previewData', dataBlob, 'preview.json');
+
       const response = await axios.post(
-        process.env.REACT_APP_API_URL + '/api/generate-pdf-from-data',
-        previewData,
+        process.env.REACT_APP_API_URL + '/api/convert-to-pdf',
+        formData,
         {
           responseType: 'blob',
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'multipart/form-data' }
         }
       );
 
