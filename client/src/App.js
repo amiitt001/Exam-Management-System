@@ -13,13 +13,22 @@ import ExamPaperGenerator from './pages/ExamPaperGenerator';
 import SeatingArrangement from './pages/SeatingArrangement';
 import InvigilatorAllocation from './pages/InvigilatorAllocation';
 import ExamSchedule from './pages/ExamSchedule';
+import LandingPage from './pages/LandingPage';
+import AboutUs from './pages/AboutUs';
+import ContactUs from './pages/ContactUs';
 
 function App() {
   return (
     <Router>
       <Layout>
         <Routes>
-          <Route path="/" element={<Dashboard />} />
+          {/* Public Routes */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/about" element={<AboutUs />} />
+          <Route path="/contact" element={<ContactUs />} />
+
+          {/* App Routes */}
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/generate-paper" element={<ExamPaperGenerator />} />
           <Route path="/seating" element={<SeatingArrangement />} />
           <Route path="/invigilator" element={<InvigilatorAllocation />} />
