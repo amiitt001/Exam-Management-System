@@ -8,7 +8,7 @@ from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, landscape
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak, Flowable
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 
@@ -69,33 +69,68 @@ def generate_seating_plan(students, rooms, pattern='standard'):
 
         # --- Pattern Logic Switch ---
         if pattern == 'columnar':
+            # Fill column by column from top to bottom.
+            # Implemented as Seat-Filling: All Lefts in Col 0, then All Rights in Col 0, etc.
+            # This ensures Strict Vertical filling.
             for c in range(cols):
-                for r in range(rows): coords.append((r, c, 2))
+                # Left Side
+                for r in range(rows): coords.append((r, c, 1, 'left'))
+                # Right Side
+                for r in range(rows): coords.append((r, c, 1, 'right'))
+                
         elif pattern == 'snake-vertical':
+            # Alternate columns should be reversed.
             for c in range(cols):
-                col_coords = [(r, c, 2) for r in range(rows)]
-                if c % 2 == 1: col_coords.reverse()
-                coords.extend(col_coords)
+                # Standard Vertical: Down
+                col_seats = []
+                for r in range(rows):
+                    col_seats.append((r, c, 1, 'left'))
+                    col_seats.append((r, c, 1, 'right'))
+                
+                if c % 2 == 1:
+                    col_seats.reverse()
+                
+                coords.extend(col_seats)
+
         elif pattern == 'checkerboard':
+            # Students placed on alternating seats (Anti-Cheat).
+            # Seat index in row: 2*c (Left), 2*c+1 (Right)
             for r in range(rows):
                 for c in range(cols):
-                    if (r + c) % 2 == 0: coords.append((r, c, 2))
+                    # Check absoluate seat positions
+                    # Left Seat
+                    if (r + 0 + c * 2) % 2 == 0:
+                        coords.append((r, c, 1, 'left'))
+                    # Right Seat
+                    if (r + 1 + c * 2) % 2 == 0:
+                        coords.append((r, c, 1, 'right'))
+
         elif pattern == 'single':
+            # Each seat (desk) should hold only one student.
             for r in range(rows):
-                for c in range(cols): coords.append((r, c, 1))
+                for c in range(cols): 
+                    coords.append((r, c, 1, 'left'))
+
         elif pattern == 'alternate-rows':
+            # Even rows different capacity than odd.
+            # Row 0=2, Row 1=1
             for r in range(rows):
                 capacity = 2 if r % 2 == 0 else 1
                 for c in range(cols): coords.append((r, c, capacity))
+
         elif pattern == 'hybrid':
+            # Columns alternate capacity.
+            # Col 0=2, Col 1=1
             for c in range(cols):
                 capacity = 2 if c % 2 == 0 else 1
                 for r in range(rows): coords.append((r, c, capacity))
+
         elif pattern == 'staggered':
+            # Rows alternate seating on left and right.
             for r in range(rows):
-                # Row 1 (r=0): Left. Row 2 (r=1): Right.
                 side = 'left' if r % 2 == 0 else 'right'
                 for c in range(cols): coords.append((r, c, 1, side))
+
         else: # Standard (Z) & Snake (S)
             for r in range(rows):
                 row_coords = [(r, c, 2) for c in range(cols)]
@@ -138,7 +173,7 @@ def generate_seating_plan(students, rooms, pattern='standard'):
     
     return processed_rooms, unallocated
 
-def convert_grid_to_assigned_data(processed_rooms):
+def convert_grid_to_assigned_data(processed_rooms): # Helper to prevent EOF issues if cut off
     """Converts grid-based room data to the assignedData format expected by PDF/Frontend."""
     assigned_data = {}
     for room in processed_rooms:
@@ -176,43 +211,107 @@ def convert_grid_to_assigned_data(processed_rooms):
 # Section C: API Endpoints
 # ==========================================
 
+class ContextSetter(Flowable):
+    """
+    A invisible Flowable that updates the canvas context (room info) 
+    whenever it is processed during the document build.
+    This allows page headers to change dynamically between rooms.
+    """
+    def __init__(self, context):
+        Flowable.__init__(self)
+        self.context = context
+
+    def draw(self):
+        # Update the canvas with the current context
+        self.canv.header_context = self.context
+    
+    def wrap(self, availWidth, availHeight):
+        return (0, 0) # Takes up no space
+
+def draw_header(canvas, doc):
+    """
+    Draws the fixed header on every page using the current context 
+    stored in the canvas.
+    """
+    canvas.saveState()
+    
+    # Retrieve context or use defaults
+    ctx = getattr(canvas, 'header_context', {})
+    college = ctx.get('college', "GALGOTIAS EDUCATIONAL INSTITUTIONS, GREATER NOIDA")
+    exam = ctx.get('exam', "1st CAE (ODD-2025-26)")
+    room_name = ctx.get('room_name', "")
+    student_count = ctx.get('student_count', 0)
+    
+    width, height = doc.pagesize
+    
+    # 1. College Name (Centered, Bold, Largest)
+    canvas.setFont("Helvetica-Bold", 16)
+    canvas.drawCentredString(width / 2.0, height - 50, college.upper())
+    
+    # 2. Exam Name (Centered, Slightly Smaller)
+    canvas.setFont("Helvetica", 12)
+    canvas.drawCentredString(width / 2.0, height - 70, exam)
+    
+    # 3. Seating Plan Line (Centered)
+    canvas.setFont("Helvetica-Bold", 12)
+    canvas.drawCentredString(width / 2.0, height - 90, "SEATING PLAN")
+    
+    # 4. Room & Student Info Line (Left & Right aligned on same line)
+    y_pos = height - 120
+    canvas.setFont("Helvetica-Bold", 11)
+    
+    # Room Number (Left aligned with margin)
+    left_margin = doc.leftMargin
+    canvas.drawString(left_margin, y_pos, f"Room Number: {room_name}")
+    
+    # Total Students (Right aligned with margin)
+    # We calculate string width to align it properly to the right margin
+    count_text = f"Total Students: {student_count}"
+    text_width = canvas.stringWidth(count_text, "Helvetica-Bold", 11)
+    right_margin = width - doc.rightMargin
+    canvas.drawString(right_margin - text_width, y_pos, count_text)
+    
+    # 5. White Board Indicator (Centered, Separated)
+    canvas.setFont("Helvetica", 9)
+    canvas.drawCentredString(width / 2.0, y_pos - 25, "↑↑↑↑↑↑↑↑↑ White Board ↑↑↑↑↑↑↑↑↑")
+    
+    canvas.restoreState()
+
 def generate_pdf_internal(rooms, assigned_data, unallocated=None):
     buffer = BytesIO()
-    # Use Landscape to fit 4 columns of seating
-    doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), topMargin=0.5*inch, bottomMargin=0.5*inch, leftMargin=0.5*inch, rightMargin=0.5*inch)
+    # Increased topMargin to 2.2 inch to accommodate the header
+    doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), topMargin=2.2*inch, bottomMargin=0.5*inch, leftMargin=0.5*inch, rightMargin=0.5*inch)
     elements = []
     styles = getSampleStyleSheet()
     
-    # Custom Styles
-    title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], alignment=1, fontSize=16, spaceAfter=6)
-    subtitle_style = ParagraphStyle('SubtitleStyle', parent=styles['Normal'], alignment=1, fontSize=12, spaceAfter=4)
-    header_info_style = ParagraphStyle('HeaderInfoStyle', parent=styles['Normal'], fontSize=11, leading=14)
-    whiteboard_style = ParagraphStyle('WhiteboardStyle', parent=styles['Normal'], alignment=1, fontSize=10, spaceAfter=12)
+    title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], alignment=1, fontSize=14, spaceAfter=6)
+    
+    # Custom Style for Table Cells (Crucial for fitting content)
+    # alignment=1 is CENTER
+    cell_style = ParagraphStyle('CellStyle', parent=styles['Normal'], fontSize=7, leading=8, alignment=1) 
 
     for room in rooms:
         # Get pairs for this room
         room_data = assigned_data.get(room['name'], {})
         pairs = room_data.get('pairs', [])
         
-        # --- Header Section ---
-        elements.append(Paragraph(room.get('college', "GALGOTIAS EDUCATIONAL INSTITUTIONS, GREATER NOIDA"), title_style))
-        elements.append(Paragraph(room.get('exam', "1st CAE (ODD-2025-26)"), subtitle_style))
-        elements.append(Paragraph("Seating Plan", subtitle_style))
-        elements.append(Spacer(1, 0.1 * inch))
-        
-        # Room Info Line
-        room_info = f"<b>Room Number: {room['name']}</b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>Total Students: {len(pairs) * 2}</b>" # Approx count, refined below
-        # Recalculate actual students
+        # Calculate Logic
         student_count = 0
         for p in pairs:
             if p.get('s1'): student_count += 1
             if p.get('s2'): student_count += 1
-        room_info = f"<b>Room Number: {room['name']}</b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>Total Students: {student_count}</b>"
+            
+        # --- CRITICAL: Inject Context for Header ---
+        # Prior to this room's content, we set the canvas context
+        context = {
+            'college': room.get('college', "GALGOTIAS EDUCATIONAL INSTITUTIONS, GREATER NOIDA"),
+            'exam': room.get('exam', "1st CAE (ODD-2025-26)"),
+            'room_name': room['name'],
+            'student_count': student_count
+        }
+        elements.append(ContextSetter(context))
         
-        elements.append(Paragraph(room_info, header_info_style))
-        elements.append(Spacer(1, 0.1 * inch))
-        
-        elements.append(Paragraph("↑↑↑↑↑↑↑↑↑↑↑_White Board_↑↑↑↑↑↑↑↑↑↑↑", whiteboard_style))
+        # No inline headers needed anymore!
         
         if not pairs:
              elements.append(Paragraph("(No students assigned to this room)", styles['Normal']))
@@ -220,14 +319,12 @@ def generate_pdf_internal(rooms, assigned_data, unallocated=None):
              continue
 
         # --- Seating Grid (Multi-Column) ---
-        # Total columns in table = 12.
         num_super_cols = 4
         rows_per_col = math.ceil(len(pairs) / num_super_cols)
         
-        # Prepare data grid
-        table_grid = [['' for _ in range(12)] for _ in range(rows_per_col + 1)] # +1 for header
+        # Grid Setup
+        table_grid = [['' for _ in range(12)] for _ in range(rows_per_col + 1)]
         
-        # Headers
         headers = ['Seat No.', 'Roll Series 1', 'Roll Series 2']
         for i in range(num_super_cols):
             base_col = i * 3
@@ -235,9 +332,7 @@ def generate_pdf_internal(rooms, assigned_data, unallocated=None):
             table_grid[0][base_col+1] = headers[1]
             table_grid[0][base_col+2] = headers[2]
 
-        # Fill Data
         for i, pair in enumerate(pairs):
-            # Determine position
             col_idx = i // rows_per_col
             row_idx = i % rows_per_col
             
@@ -245,27 +340,41 @@ def generate_pdf_internal(rooms, assigned_data, unallocated=None):
                 break 
             
             base_col = col_idx * 3
-            # Row index in table_grid is row_idx + 1 (because of header)
             
-            table_grid[row_idx + 1][base_col] = str(i + 1)
-            table_grid[row_idx + 1][base_col + 1] = pair.get('s1', '')
-            table_grid[row_idx + 1][base_col + 2] = pair.get('s2', '')
+            # Seat Number
+            table_grid[row_idx + 1][base_col] = Paragraph(str(i + 1), cell_style)
+            
+            s1_raw = pair.get('s1', '')
+            s2_raw = pair.get('s2', '')
+            s1_parts = split_roll_branch(s1_raw)
+            s2_parts = split_roll_branch(s2_raw)
+            
+            s1_text = f"{s1_parts['roll']}<br/>{s1_parts['branch']}" if s1_raw else ''
+            s2_text = f"{s2_parts['roll']}<br/>{s2_parts['branch']}" if s2_raw else ''
+            
+            table_grid[row_idx + 1][base_col + 1] = Paragraph(s1_text, cell_style)
+            table_grid[row_idx + 1][base_col + 2] = Paragraph(s2_text, cell_style)
 
-        # Create Table
-        col_widths = [0.4*inch, 1.1*inch, 1.1*inch] * 4
-        
-        t = Table(table_grid, colWidths=col_widths)
-        
-        # Style
+        col_widths = [0.5*inch, 1.05*inch, 1.05*inch] * 4
+
+        t = Table(table_grid, colWidths=col_widths, repeatRows=1)
+
         ts = [
             ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 8),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+            ('FONTSIZE', (0, 0), (-1, 0), 7), 
+            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, 0), 'MIDDLE'),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#eeeeee')), 
+            ('ALIGN', (0, 1), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 1), (-1, -1), 'MIDDLE'),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+            ('LEFTPADDING', (0, 0), (-1, -1), 2),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 2),
+            ('TOPPADDING', (0, 0), (-1, -1), 4),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
         ]
-        
+
         t.setStyle(TableStyle(ts))
         elements.append(t)
         elements.append(Spacer(1, 0.2 * inch))
@@ -276,22 +385,31 @@ def generate_pdf_internal(rooms, assigned_data, unallocated=None):
             summary_text = "Branch & Students: " + ", ".join([f"{k}={v}" for k, v in summary.items()])
             
             footer_data = [[Paragraph(summary_text, styles['Normal'])]]
-            t_footer = Table(footer_data, colWidths=[10.4*inch])
+            t_footer = Table(footer_data, colWidths=[10.6*inch])
             t_footer.setStyle(TableStyle([
                 ('GRID', (0, 0), (-1, -1), 1, colors.black),
                 ('LEFTPADDING', (0, 0), (-1, -1), 10),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 10),
+                ('TOPPADDING', (0, 0), (-1, -1), 6),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
             ]))
             elements.append(t_footer)
 
         elements.append(PageBreak())
+        
     if unallocated:
         elements.append(Paragraph("Students Pending Allocation (Not Seated)", title_style))
         elements.append(Spacer(1, 0.2 * inch))
         
         unallocated_data = [['Roll No', 'Branch', 'Series']]
         for student in unallocated:
-            details = split_roll_branch(student['val'])
-            unallocated_data.append([details['roll'], details['branch'], student['orig']])
+            if 'val' in student:
+                # Raw format from calculation logic
+                details = split_roll_branch(student['val'])
+                unallocated_data.append([details['roll'], details['branch'], student.get('orig', '')])
+            else:
+                # Processed format from Frontend
+                unallocated_data.append([student.get('roll', ''), student.get('branch', ''), student.get('orig', '')])
             
         ut = Table(unallocated_data)
         ut.setStyle(TableStyle([
@@ -304,7 +422,9 @@ def generate_pdf_internal(rooms, assigned_data, unallocated=None):
         ]))
         elements.append(ut)
 
-    doc.build(elements)
+    # Build PDF with Callbacks
+    doc.build(elements, onFirstPage=draw_header, onLaterPages=draw_header)
+    
     buffer.seek(0)
     return send_file(buffer, as_attachment=True, download_name='seating_plan.pdf', mimetype='application/pdf')
 
@@ -333,7 +453,7 @@ def upload_file():
             idx_roll2 = find_col_index(headers, ["roll no. series-2", "series-2", "roll2"])
             idx_room = find_col_index(headers, ["room no.", "room"])
             idx_rows = find_col_index(headers, ["rows", "row", "no. of rows"])
-            idx_cols = find_col_index(headers, ["columns", "cols"])
+            idx_cols = find_col_index(headers, ["columns", "cols", "column"])
             idx_college = find_col_index(headers, ["college name", "college"])
             idx_exam = find_col_index(headers, ["exam name", "exam"])
 

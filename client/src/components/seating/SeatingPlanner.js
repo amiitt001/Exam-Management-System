@@ -32,24 +32,68 @@ function SeatingPlanner() {
   // --- 1. Fetch Preview ---
   const handlePreview = async (e) => {
     e.preventDefault();
-    if (!studentFile) {
-      setError("Please upload a master seating plan file.");
-      return;
-    }
+      if (!studentFile) {
+        setError("Please upload a master seating plan file.");
+        return;
+      }
     setLoading(true);
     setError(null);
     setPreviewData(null);
 
     try {
       const formData = new FormData();
-      formData.append('seatingPlanFile', studentFile);
+      // Python service expects field name 'file'
+      formData.append('file', studentFile);
 
-      // Call backend to preview seating plan
-      const previewRes = await axios.post(process.env.REACT_APP_API_URL + '/preview-seating-plan', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      // 1) Upload and parse the Excel to get a data_id
+      const uploadRes = await axios.post(
+        process.env.REACT_APP_API_URL + '/upload',
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
 
-      setPreviewData(previewRes.data);
+      const { data_id } = uploadRes.data;
+      if (!data_id) {
+        throw new Error('Upload failed: missing data_id');
+      }
+
+      // 2) Calculate seating with selected pattern
+      const calcRes = await axios.post(
+        process.env.REACT_APP_API_URL + '/calculate',
+        { data_id, pattern }
+      );
+
+      const { rooms, unallocated, total_students } = calcRes.data;
+
+      // 3) Convert processed rooms grid to assignedData for UI
+      const buildAssignedData = (processedRooms) => {
+        const assigned = {};
+        processedRooms.forEach((room) => {
+          const pairs = [];
+          const summary = {};
+          for (let r = 0; r < room.rows; r++) {
+            for (let c = 0; c < room.cols; c++) {
+              const desk = room.grid?.[r]?.[c];
+              if (!desk) continue;
+              const s1 = desk.left ? `${desk.left.roll || ''} ${desk.left.branch || ''}`.trim() : '';
+              const s2 = desk.right ? `${desk.right.roll || ''} ${desk.right.branch || ''}`.trim() : '';
+              if (s1 || s2) {
+                pairs.push({ s1, s2 });
+                const b1 = desk.left?.branch || '';
+                const b2 = desk.right?.branch || '';
+                if (b1) summary[b1] = (summary[b1] || 0) + 1;
+                if (b2) summary[b2] = (summary[b2] || 0) + 1;
+              }
+            }
+          }
+          assigned[room.name] = { pairs, summary };
+        });
+        return assigned;
+      };
+
+      const assignedData = buildAssignedData(rooms);
+
+      setPreviewData({ rooms, assignedData, unallocated, total_students });
 
     } catch (err) {
       console.error(err);
@@ -74,19 +118,15 @@ function SeatingPlanner() {
     setLoading(true);
     setError(null);
     try {
-      const formData = new FormData();
-      // Serialize the preview data back to a file-like object or send as-is
-      // For now, we'll create a new FormData with the edited data
-      const dataBlob = new Blob([JSON.stringify(previewData)], { type: 'application/json' });
-      formData.append('previewData', dataBlob, 'preview.json');
-
+      // Call python endpoint that accepts rooms + assignedData and returns PDF
       const response = await axios.post(
-        process.env.REACT_APP_API_URL + '/convert-to-pdf',
-        formData,
+        process.env.REACT_APP_API_URL + '/generate-pdf-from-logic',
         {
-          responseType: 'blob',
-          headers: { 'Content-Type': 'multipart/form-data' }
-        }
+          rooms: previewData.rooms,
+          assignedData: previewData.assignedData,
+          unallocated: previewData.unallocated || []
+        },
+        { responseType: 'blob' }
       );
 
       const file = new Blob([response.data], { type: 'application/pdf' });
