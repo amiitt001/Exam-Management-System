@@ -1,37 +1,50 @@
 import React, { useState } from "react";
-import { FiFileText, FiCpu, FiDownload, FiSave, FiAlertCircle, FiCheckCircle, FiZap } from "react-icons/fi";
+import { Card, Icon, Input, Btn, Badge } from "../components/ui";
 
-const ExamPaperGenerator = () => {
+const ExamPaperGenerator = ({ showToast }) => {
     const [loading, setLoading] = useState(false);
     const [paper, setPaper] = useState(null);
+    const [form, setForm] = useState({
+        syllabus: "",
+        difficulty: "Intermediate",
+        format: "Objective (MCQs)",
+        count: 10
+    });
+
+    const f = (k) => (v) => setForm(prev => ({ ...prev, [k]: v }));
 
     const generatePaper = async () => {
+        if (!form.syllabus) {
+            if (showToast) showToast("Please enter syllabus topics", "error");
+            return;
+        }
         setLoading(true);
 
-        const syllabus = document.getElementById("syllabus").value;
-        const difficulty = document.getElementById("difficulty").value;
-        const format = document.getElementById("format").value;
-        const count = document.getElementById("count").value;
-
-        // Simulate API call for UI demonstration if needed, but keeping actual logic
         try {
-            const response = await fetch(`${process.env.REACT_APP_API_URL} /api/generate - paper`, {
+            const response = await fetch(`${process.env.REACT_APP_API_URL}/api/generate-paper`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ syllabus, difficulty, format, numQuestions: count })
+                body: JSON.stringify({
+                    syllabus: form.syllabus,
+                    difficulty: form.difficulty,
+                    format: form.format,
+                    numQuestions: form.count
+                })
             });
 
             const data = await response.json();
             setPaper(data);
+            if (showToast) showToast("Exam paper generated successfully!");
         } catch (error) {
             console.error("Generation failed", error);
+            if (showToast) showToast("Generation failed", "error");
         }
         setLoading(false);
     };
 
     const downloadPDF = async () => {
         try {
-            const response = await fetch(`${process.env.REACT_APP_API_URL} /api/generate - paper - pdf`, {
+            const response = await fetch(`${process.env.REACT_APP_API_URL}/api/generate-paper-pdf`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ questions: paper.questions })
@@ -43,96 +56,86 @@ const ExamPaperGenerator = () => {
             link.href = url;
             link.download = "ExamPaper.pdf";
             link.click();
+            if (showToast) showToast("Downloaded as PDF!");
         } catch (error) {
             console.error("Download failed", error);
+            if (showToast) showToast("Download failed", "error");
         }
     };
 
-    return (
-        <div className="max-w-6xl mx-auto space-y-10 animate-fade-in pb-20">
+    const theme = {
+        textSub: "#94a3b8",
+        purple: "#8b5cf6",
+        surfaceAlt: "#1a2235",
+        textMuted: "#64748b",
+        accent: "#3b82f6"
+    };
 
-            {/* Header */}
+    return (
+        <div className="fade-in space-y-8 pb-20">
             <div>
-                <span className="text-teal-400 font-bold tracking-[0.2em] text-[10px] uppercase mb-2 block">AI Laboratory</span>
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <h2 className="font-serif text-3xl font-bold text-white flex items-center gap-3">
-                        <FiFileText className="text-teal-400" />
-                        Paper Generator
-                    </h2>
-                    <div className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-xl border border-white/10">
-                        <FiCpu className="text-teal-400 animate-pulse" />
-                        <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">Gemini-1.5-Pro Active</span>
-                    </div>
-                </div>
+                <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 6 }}>Paper Generator</h1>
+                <p style={{ color: theme.textSub }}>Generate AI-powered exam question papers using Gemini-1.5-Pro</p>
             </div>
 
-            <div className="grid lg:grid-cols-3 gap-8">
-
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* CONFIGURATION PANEL */}
                 <div className="lg:col-span-1 space-y-6">
-                    <div className="bg-card backdrop-blur-xl border border-white/5 rounded-[32px] p-8 shadow-2xl">
-                        <h3 className="text-white font-bold text-sm uppercase tracking-widest mb-6 border-b border-white/5 pb-4">Configuration</h3>
-
+                    <Card>
+                        <h3 style={{ fontWeight: 700, marginBottom: 20, display: "flex", alignItems: "center", gap: 8 }}>
+                            <Icon name="brain" size={18} color={theme.purple} /> Configure Synthesis
+                        </h3>
                         <div className="space-y-6">
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Syllabus / Topics</label>
-                                <textarea
-                                    id="syllabus"
-                                    rows={5}
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-white text-sm placeholder-slate-600 focus:border-teal-500/50 outline-none transition-all resize-none"
-                                    placeholder="Enter topics, e.g. Quantum Mechanics, Wave functions..."
-                                />
-                            </div>
+                            <Input
+                                label="Syllabus / Topics"
+                                value={form.syllabus}
+                                onChange={f("syllabus")}
+                                placeholder="Enter topics, e.g. Quantum Mechanics, Wave functions..."
+                                rows={5}
+                            />
 
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Difficulty Level</label>
-                                <select id="difficulty" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-teal-500/50 outline-none appearance-none">
-                                    <option className="bg-void">Beginner</option>
-                                    <option className="bg-void" selected>Intermediate</option>
-                                    <option className="bg-void">Expert</option>
-                                </select>
-                            </div>
+                            <Input
+                                label="Difficulty Level"
+                                value={form.difficulty}
+                                onChange={f("difficulty")}
+                                options={["Beginner", "Intermediate", "Expert"]}
+                            />
 
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Question Format</label>
-                                <select id="format" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-teal-500/50 outline-none appearance-none">
-                                    <option className="bg-void">Objective (MCQs)</option>
-                                    <option className="bg-void">Subjective (Theory)</option>
-                                    <option className="bg-void">Hybrid Matrix</option>
-                                </select>
-                            </div>
+                            <Input
+                                label="Question Format"
+                                value={form.format}
+                                onChange={f("format")}
+                                options={["Objective (MCQs)", "Subjective (Theory)", "Hybrid Matrix"]}
+                            />
 
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Quantity</label>
-                                <input
-                                    id="count"
-                                    type="number"
-                                    defaultValue="10"
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-teal-500/50 outline-none"
-                                />
-                            </div>
+                            <Input
+                                label="Quantity"
+                                type="number"
+                                value={form.count}
+                                onChange={v => f("count")(Number(v))}
+                            />
 
-                            <button
+                            <Btn
                                 onClick={generatePaper}
                                 disabled={loading}
-                                className="w-full bg-gradient-to-br from-teal-400 to-cyan-500 text-slate-950 font-black py-4 rounded-2xl hover:shadow-[0_0_30px_rgba(0,229,195,0.4)] transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2 group"
+                                style={{ width: "100%", justifyContent: "center" }}
                             >
                                 {loading ? (
-                                    <span className="w-5 h-5 border-2 border-slate-900/30 border-t-slate-900 rounded-full animate-spin"></span>
+                                    <><span className="spin" style={{ display: "inline-block" }}>⟳</span> Synthesizing...</>
                                 ) : (
                                     <>
                                         Synthesize Paper
-                                        <FiZap className="group-hover:animate-bounce" />
+                                        <Icon name="brain" size={16} />
                                     </>
                                 )}
-                            </button>
+                            </Btn>
                         </div>
-                    </div>
+                    </Card>
 
-                    <div className="bg-teal-500/5 border border-teal-500/10 rounded-2xl p-6 flex gap-4">
-                        <FiAlertCircle className="text-teal-400 shrink-0" size={20} />
-                        <p className="text-[11px] text-slate-400 leading-relaxed uppercase tracking-wider font-bold">
-                            AI synthesis can take up to 30 seconds depending on complexity.
+                    <div style={{ background: "rgba(59, 130, 246, 0.05)", border: "1px solid rgba(59, 130, 246, 0.1)", borderRadius: 16, padding: 20, display: "flex", gap: 12 }}>
+                        <Icon name="info" color={theme.accent} size={20} />
+                        <p style={{ fontSize: 12, color: theme.textSub, lineHeight: 1.6 }}>
+                            AI synthesis can take up to 30 seconds depending on complexity. Gemini-1.5-Pro is active.
                         </p>
                     </div>
                 </div>
@@ -140,31 +143,27 @@ const ExamPaperGenerator = () => {
                 {/* PREVIEW + EDIT PANEL */}
                 <div className="lg:col-span-2">
                     {!paper ? (
-                        <div className="h-full min-h-[500px] border-2 border-dashed border-white/5 rounded-[40px] flex flex-col items-center justify-center text-center p-12">
-                            <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center text-slate-700 mb-6">
-                                <FiFileText size={40} />
-                            </div>
-                            <h3 className="text-xl font-bold text-white mb-2">No Synthesis Active</h3>
-                            <p className="text-slate-500 max-w-xs font-light">Configure the parameters on the left and trigger the neural engine to generate questions.</p>
-                        </div>
+                        <Card style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 500, color: theme.textMuted, gap: 12, textAlign: 'center' }}>
+                            <Icon name="paper" size={40} />
+                            <h3 style={{ fontWeight: 700, color: '#fff' }}>No Synthesis Active</h3>
+                            <p style={{ maxWidth: 280 }}>Configure the parameters on the left and trigger the neural engine to generate questions.</p>
+                        </Card>
                     ) : (
-                        <div className="bg-card backdrop-blur-xl border border-white/10 rounded-[40px] shadow-2xl overflow-hidden animate-fade-up">
-                            <div className="bg-white/5 px-10 py-6 border-b border-white/10 flex justify-between items-center">
-                                <h3 className="font-serif text-xl font-bold text-white">Neural Preview</h3>
-                                <div className="flex gap-4">
-                                    <button onClick={() => setPaper(null)} className="text-slate-500 text-xs font-bold uppercase tracking-widest hover:text-white transition-colors">Discard</button>
-                                </div>
+                        <Card style={{ padding: 0, overflow: 'hidden' }}>
+                            <div style={{ padding: "20px 24px", borderBottom: `1px solid #1e2d45`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <h3 style={{ fontWeight: 700, fontSize: 17 }}>Neural Preview</h3>
+                                <Btn small variant="ghost" onClick={() => setPaper(null)}>Discard</Btn>
                             </div>
 
-                            <div className="p-10 space-y-8 max-h-[700px] overflow-y-auto custom-scrollbar">
+                            <div style={{ padding: 24, spaceY: 6, maxHeight: 600, overflow: 'auto' }} className="space-y-4">
                                 {paper.questions.map((q, i) => (
-                                    <div key={i} className="group space-y-3 p-6 rounded-3xl bg-white/[0.02] border border-white/5 hover:border-teal-500/30 transition-all">
-                                        <div className="flex items-center justify-between text-[11px] font-black text-slate-600 uppercase tracking-[0.2em]">
-                                            <span>Component {i + 1}</span>
-                                            <span className="text-teal-500/50">Gemini-Refined</span>
+                                    <div key={i} style={{ padding: 20, background: theme.surfaceAlt, borderRadius: 16, border: '1px solid #1e2d45' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+                                            <Badge color="blue">Component {i + 1}</Badge>
+                                            <span style={{ fontSize: 11, color: theme.textMuted, fontWeight: 700, textTransform: 'uppercase', tracking: '1px' }}>Gemini-Refined</span>
                                         </div>
                                         <textarea
-                                            className="w-full bg-transparent text-white text-lg font-light leading-relaxed border-none outline-none resize-none px-0"
+                                            style={{ width: '100%', background: 'transparent', border: 'none', color: '#fff', fontSize: 15, lineHeight: 1.6, resize: 'none', outline: 'none' }}
                                             rows={2}
                                             value={q.question}
                                             onChange={(e) => {
@@ -177,29 +176,28 @@ const ExamPaperGenerator = () => {
                                 ))}
                             </div>
 
-                            <div className="bg-white/5 p-10 mt-auto border-t border-white/10 flex flex-col sm:flex-row gap-4">
-                                <button
-                                    onClick={() => setPaper({ ...paper, saved: true })}
-                                    className="flex-1 bg-white/5 hover:bg-teal-500/10 text-white font-bold py-4 rounded-2xl border border-white/10 hover:border-teal-500/30 transition-all flex items-center justify-center gap-3"
+                            <div style={{ padding: 24, borderTop: `1px solid #1e2d45`, display: 'flex', gap: 12 }}>
+                                <Btn
+                                    variant="ghost"
+                                    onClick={() => {
+                                        setPaper({ ...paper, saved: true });
+                                        if (showToast) showToast("Neural State Saved");
+                                    }}
+                                    style={{ flex: 1, justifyContent: "center" }}
                                 >
-                                    <FiSave className="text-teal-400" />
+                                    <Icon name="check" size={16} />
                                     {paper.saved ? "Neural State Saved" : "Commit to Neural Bank"}
-                                </button>
-
-                                <button
+                                </Btn>
+                                <Btn
                                     onClick={downloadPDF}
                                     disabled={!paper.saved}
-                                    className={`flex - 1 font - bold py - 4 rounded - 2xl transition - all flex items - center justify - center gap - 3 
-                                        ${paper.saved
-                                            ? 'bg-gradient-to-br from-teal-400 to-cyan-500 text-slate-950 hover:shadow-[0_0_30px_rgba(0,229,195,0.4)]'
-                                            : 'bg-white/5 text-slate-600 border border-white/5 cursor-not-allowed'
-                                        } `}
+                                    style={{ flex: 1, justifyContent: "center" }}
                                 >
-                                    <FiDownload />
+                                    <Icon name="download" size={16} />
                                     Architect PDF
-                                </button>
+                                </Btn>
                             </div>
-                        </div>
+                        </Card>
                     )}
                 </div>
             </div>

@@ -1,53 +1,63 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FiLayout, FiFileText, FiUsers, FiClock } from 'react-icons/fi';
+import { Card, Icon, Btn } from '../components/ui';
 
 const LandingPage = () => {
+    const theme = {
+        accent: "#3b82f6",
+        textSub: "#94a3b8",
+        surfaceAlt: "#1a2235",
+    };
+
     return (
-        <div className="min-h-screen text-slate-200">
+        <div className="fade-in min-h-screen">
+            {/* Ambient Background Elements */}
+            <div className="orb" style={{ top: '10%', left: '5%', width: 400, height: 400, opacity: 0.15 }} />
+            <div className="orb" style={{ top: '60%', right: '5%', width: 500, height: 500, opacity: 0.1, background: 'var(--accent-teal)' }} />
+            <div className="bg-grid opacity-20" />
 
             {/* Hero Section */}
             <header className="relative pt-32 pb-40 px-6 text-center overflow-hidden">
                 <div className="max-w-5xl mx-auto relative z-10">
-                    <div className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-teal-500/10 border border-teal-500/25 text-teal-400 text-xs font-bold tracking-widest uppercase mb-8 animate-fade-in">
-                        <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse"></span>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', borderRadius: 100, background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)', color: theme.accent, fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 32 }}>
+                        <span className="pulse" style={{ width: 6, height: 6, borderRadius: '50%', background: theme.accent }} />
                         AI Powered Exam Generation
                     </div>
 
-                    <h1 className="font-serif text-6xl md:text-8xl font-black tracking-tight text-white mb-8 leading-[1.1]">
+                    <h1 style={{ fontSize: 'clamp(44px, 8vw, 84px)', lineHeight: 1, fontWeight: 800, color: '#fff', marginBottom: 32, letterSpacing: '-0.03em' }}>
                         The Future of <br />
-                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-teal-400 via-cyan-400 to-gold-400">Exam Management.</span>
+                        <span style={{
+                            background: 'linear-gradient(to right, #3b82f6, #2dd4bf)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                        }}>Exam Management.</span>
                     </h1>
 
-                    <p className="text-xl md:text-2xl text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed font-light">
-                        Automate seating plans, generate complex paper with Gemini AI, and manage invigilation in a seamless, secure cloud environment.
+                    <p style={{ color: theme.textSub, fontSize: 'clamp(18px, 2vw, 22px)', lineHeight: 1.6, maxWidth: 640, margin: '0 auto 48px', fontWeight: 400 }}>
+                        Automate seating plans, generate complex papers with Gemini AI, and manage invigilation in a seamless, secure cloud environment.
                     </p>
 
-                    <div className="flex flex-col sm:flex-row justify-center gap-6 animate-fade-up">
+                    <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 20 }}>
                         <Link to="/dashboard">
-                            <button className="bg-gradient-to-br from-teal-400 to-cyan-500 text-slate-950 px-10 py-5 rounded-2xl font-black text-xl hover:shadow-[0_0_50px_rgba(0,229,195,0.4)] transition-all transform hover:-translate-y-1 w-full sm:w-auto">
-                                Launch Console →
-                            </button>
+                            <Btn style={{ padding: '20px 48px', fontSize: 18 }}>Launch Console</Btn>
                         </Link>
                         <Link to="/about">
-                            <button className="bg-white/5 backdrop-blur-md border border-white/10 text-white px-10 py-5 rounded-2xl font-bold text-xl hover:bg-white/10 transition-all w-full sm:w-auto">
-                                Explore Features
-                            </button>
+                            <Btn variant="ghost" style={{ padding: '20px 48px', fontSize: 18 }}>Explore Features</Btn>
                         </Link>
                     </div>
 
-                    <div className="mt-20 flex justify-center gap-12 text-slate-500">
-                        <div className="text-center">
-                            <div className="text-3xl font-serif font-bold text-teal-400">99%</div>
-                            <div className="text-[10px] tracking-widest uppercase font-bold mt-1">Accuracy</div>
+                    <div style={{ marginTop: 80, display: 'flex', justifyContent: 'center', gap: 60 }}>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: 32, fontWeight: 800, color: theme.accent }}>99%</div>
+                            <div style={{ fontSize: 10, fontWeight: 800, color: theme.textSub, textTransform: 'uppercase', letterSpacing: 1 }}>Accuracy</div>
                         </div>
-                        <div className="text-center">
-                            <div className="text-3xl font-serif font-bold text-cyan-400">AI</div>
-                            <div className="text-[10px] tracking-widest uppercase font-bold mt-1">Powered</div>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: 32, fontWeight: 800, color: '#2dd4bf' }}>AI</div>
+                            <div style={{ fontSize: 10, fontWeight: 800, color: theme.textSub, textTransform: 'uppercase', letterSpacing: 1 }}>Powered</div>
                         </div>
-                        <div className="text-center">
-                            <div className="text-3xl font-serif font-bold text-white">∞</div>
-                            <div className="text-[10px] tracking-widest uppercase font-bold mt-1">Efficiency</div>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: 32, fontWeight: 800, color: '#fff' }}>∞</div>
+                            <div style={{ fontSize: 10, fontWeight: 800, color: theme.textSub, textTransform: 'uppercase', letterSpacing: 1 }}>Efficiency</div>
                         </div>
                     </div>
                 </div>
@@ -56,83 +66,73 @@ const LandingPage = () => {
             {/* Features Grid */}
             <section className="px-6 py-32 relative z-10">
                 <div className="max-w-7xl mx-auto">
-                    <div className="flex flex-col md:flex-row items-end justify-between mb-20 gap-8">
+                    <div style={{ display: 'flex', flexDirection: 'column', md: { flexDirection: 'row' }, justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 80, gap: 32 }}>
                         <div>
-                            <span className="text-teal-400 font-bold tracking-[0.2em] text-xs uppercase mb-4 block">Core Platform</span>
-                            <h2 className="font-serif text-4xl md:text-5xl font-bold text-white leading-tight">Everything you need to <br />run exams like clockwork.</h2>
+                            <span style={{ color: theme.accent, fontWeight: 800, fontSize: 12, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16, display: 'block' }}>Core Platform</span>
+                            <h2 style={{ fontSize: 'clamp(32px, 5vw, 48px)', fontWeight: 800, color: '#fff', lineHeight: 1.1 }}>Everything you need to <br />run exams like clockwork.</h2>
                         </div>
-                        <p className="text-slate-400 max-w-md text-lg leading-relaxed">
+                        <p style={{ color: theme.textSub, fontSize: 18, maxWidth: 440 }}>
                             A unified suite of tools designed to replace manual processes with high-precision AI automation.
                         </p>
                     </div>
 
-                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {/* Feature 1 */}
-                        <div className="group bg-white/5 backdrop-blur-sm p-10 rounded-[32px] border border-white/5 hover:border-teal-500/30 hover:bg-white/[0.08] transition-all duration-500 cursor-pointer">
-                            <div className="w-16 h-16 bg-teal-500/10 rounded-2xl flex items-center justify-center text-teal-400 mb-8 border border-teal-500/20 group-hover:scale-110 transition-transform">
-                                <FiLayout size={32} />
-                            </div>
-                            <h3 className="font-serif text-2xl font-bold text-white mb-4">Smart Seating</h3>
-                            <p className="text-slate-400 leading-relaxed text-sm">
-                                Generate conflict-free seating plans with support for Staggered, Columnar, and Snake patterns.
-                            </p>
-                        </div>
-
-                        {/* Feature 2 */}
-                        <div className="group bg-white/5 backdrop-blur-sm p-10 rounded-[32px] border border-white/5 hover:border-cyan-500/30 hover:bg-white/[0.08] transition-all duration-500 cursor-pointer">
-                            <div className="w-16 h-16 bg-cyan-500/10 rounded-2xl flex items-center justify-center text-cyan-400 mb-8 border border-cyan-500/20 group-hover:scale-110 transition-transform">
-                                <FiFileText size={32} />
-                            </div>
-                            <h3 className="font-serif text-2xl font-bold text-white mb-4">Paper Gen</h3>
-                            <p className="text-slate-400 leading-relaxed text-sm">
-                                Leverages Gemini AI to build balanced question papers from your bank with custom difficulty.
-                            </p>
-                        </div>
-
-                        {/* Feature 3 */}
-                        <div className="group bg-white/5 backdrop-blur-sm p-10 rounded-[32px] border border-white/5 hover:border-white/20 hover:bg-white/[0.08] transition-all duration-500 cursor-pointer">
-                            <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center text-white mb-8 border border-white/10 group-hover:scale-110 transition-transform">
-                                <FiUsers size={32} />
-                            </div>
-                            <h3 className="font-serif text-2xl font-bold text-white mb-4">Invigilation</h3>
-                            <p className="text-slate-400 leading-relaxed text-sm">
-                                Fairly allocate duties to faculty members, tracking hours and preventing scheduling collisions.
-                            </p>
-                        </div>
-
-                        {/* Feature 4 */}
-                        <div className="group bg-white/5 backdrop-blur-sm p-10 rounded-[32px] border border-white/5 hover:border-amber-500/30 hover:bg-white/[0.08] transition-all duration-500 cursor-pointer">
-                            <div className="w-16 h-16 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-400 mb-8 border border-amber-500/20 group-hover:scale-110 transition-transform">
-                                <FiClock size={32} />
-                            </div>
-                            <h3 className="font-serif text-2xl font-bold text-white mb-4">Scheduling</h3>
-                            <p className="text-slate-400 leading-relaxed text-sm">
-                                Advanced time-tabling that flags room conflicts and resource bottlenecks automatically.
-                            </p>
-                        </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <FeatureCard
+                            icon="user"
+                            title="Smart Seating"
+                            desc="Generate conflict-free seating plans with support for Staggered, Columnar, and Snake patterns."
+                            color="blue"
+                        />
+                        <FeatureCard
+                            icon="chart"
+                            title="Paper Gen"
+                            desc="Leverages Gemini AI to build balanced question papers from your bank with custom difficulty."
+                            color="teal"
+                        />
+                        <FeatureCard
+                            icon="user"
+                            title="Invigilation"
+                            desc="Fairly allocate duties to faculty members, tracking hours and preventing scheduling collisions."
+                            color="cyan"
+                        />
+                        <FeatureCard
+                            icon="calendar"
+                            title="Scheduling"
+                            desc="Advanced time-tabling that flags room conflicts and resource bottlenecks automatically."
+                            color="amber"
+                        />
                     </div>
                 </div>
             </section>
 
             {/* Footer */}
-            <footer className="border-t border-white/5 py-16 px-6 relative z-10">
-                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-teal-500 rounded flex items-center justify-center font-serif font-black text-slate-900 text-sm">E</div>
-                        <span className="text-xl font-serif font-bold text-white">ExamGen</span>
+            <footer style={{ padding: '80px 24px', borderTop: '1px solid #1e2d45', background: 'rgba(0,0,0,0.2)' }}>
+                <div className="max-w-7xl mx-auto" style={{ display: 'flex', flexDirection: 'column', md: { flexDirection: 'row' }, justifyContent: 'space-between', alignItems: 'center', gap: 40 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div style={{ width: 40, height: 40, background: theme.accent, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, color: '#000', fontSize: 20 }}>E</div>
+                        <span style={{ fontSize: 24, fontWeight: 800, color: '#fff' }}>ExamGen</span>
                     </div>
-                    <p className="text-slate-500 text-sm tracking-wide">
+                    <p style={{ color: theme.textSub, fontSize: 14 }}>
                         &copy; 2026 ExamGen Inc. Built with AI for modern education.
                     </p>
-                    <div className="flex gap-8 text-slate-400 text-sm font-medium">
-                        <Link to="/about" className="hover:text-teal-400 transition-colors">Privacy</Link>
-                        <Link to="/contact" className="hover:text-teal-400 transition-colors">Terms</Link>
+                    <div style={{ display: 'flex', gap: 32, fontSize: 14, fontWeight: 600 }}>
+                        <Link to="/about" style={{ color: theme.textSub }}>Privacy</Link>
+                        <Link to="/contact" style={{ color: theme.textSub }}>Terms</Link>
                     </div>
                 </div>
             </footer>
-
         </div>
     );
 };
+
+const FeatureCard = ({ icon, title, desc, color }) => (
+    <Card hover style={{ padding: 40 }}>
+        <div style={{ width: 64, height: 64, background: 'rgba(255,255,255,0.03)', borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 32, border: '1px solid rgba(255,255,255,0.05)' }}>
+            <Icon name={icon} size={32} color={color === 'blue' ? '#3b82f6' : '#2dd4bf'} />
+        </div>
+        <h3 style={{ fontSize: 24, fontWeight: 700, color: '#fff', marginBottom: 16 }}>{title}</h3>
+        <p style={{ color: '#94a3b8', fontSize: 14, lineHeight: 1.6 }}>{desc}</p>
+    </Card>
+);
 
 export default LandingPage;

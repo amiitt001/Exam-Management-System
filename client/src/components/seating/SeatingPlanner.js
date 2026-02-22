@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { FiCheckSquare, FiUploadCloud, FiFile, FiDownload, FiX, FiInfo, FiLayout } from 'react-icons/fi';
+import { Card, Icon, Btn, Badge } from '../ui';
 
 function SeatingPlanner() {
   const [studentFile, setStudentFile] = useState(null);
@@ -10,50 +10,46 @@ function SeatingPlanner() {
   const [previewData, setPreviewData] = useState(null);
   const [pattern, setPattern] = useState('standard');
 
+  const theme = {
+    accent: "#3b82f6",
+    accentSoft: "rgba(59,130,246,0.12)",
+    textSub: "#94a3b8",
+    surfaceAlt: "#1a2235",
+    textMuted: "#64748b",
+  };
+
+  const patterns = [
+    { id: 'standard', label: 'Standard Z' },
+    { id: 'staggered', label: 'Staggered' },
+    { id: 'snake', label: 'Snake S' },
+    { id: 'snake-vertical', label: 'Vert. Snake' },
+    { id: 'checkerboard', label: 'Checkerboard' },
+    { id: 'hybrid', label: 'Hybrid Auto' },
+  ];
+
   const handleDragOver = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); };
   const handleDragLeave = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); };
   const handleDrop = (e) => {
     e.preventDefault(); e.stopPropagation(); setIsDragging(false);
     const files = e.dataTransfer.files;
-    if (files && files.length > 0) {
-      setStudentFile(files[0]);
-      setError(null);
-    }
+    if (files && files.length > 0) { setStudentFile(files[0]); setError(null); }
   };
   const handleFileChange = (e) => {
     const files = e.target.files;
-    if (files && files.length > 0) {
-      setStudentFile(files[0]);
-      setError(null);
-    }
+    if (files && files.length > 0) { setStudentFile(files[0]); setError(null); }
   };
 
   const handlePreview = async (e) => {
     e.preventDefault();
-    if (!studentFile) {
-      setError("Please upload a master seating plan file.");
-      return;
-    }
-    setLoading(true);
-    setError(null);
+    if (!studentFile) { setError("Please upload a master seating plan file."); return; }
+    setLoading(true); setError(null);
 
     try {
       const formData = new FormData();
       formData.append('file', studentFile);
-
-      const uploadRes = await axios.post(
-        process.env.REACT_APP_API_URL + '/upload',
-        formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } }
-      );
-
+      const uploadRes = await axios.post(process.env.REACT_APP_API_URL + '/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
       const { data_id } = uploadRes.data;
-
-      const calcRes = await axios.post(
-        process.env.REACT_APP_API_URL + '/calculate',
-        { data_id, pattern }
-      );
-
+      const calcRes = await axios.post(process.env.REACT_APP_API_URL + '/calculate', { data_id, pattern });
       const { rooms, unallocated, total_students } = calcRes.data;
 
       const buildAssignedData = (processedRooms) => {
@@ -82,12 +78,8 @@ function SeatingPlanner() {
       };
 
       setPreviewData({ rooms, assignedData: buildAssignedData(rooms), unallocated, total_students });
-
-    } catch (err) {
-      setError(err.response?.data?.error || "Failed to generate preview.");
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { setError(err.response?.data?.error || "Failed to generate preview."); }
+    finally { setLoading(false); }
   };
 
   const handleStudentChange = (roomName, pairIndex, field, value) => {
@@ -102,225 +94,161 @@ function SeatingPlanner() {
   const handleDownloadPDF = async () => {
     setLoading(true);
     try {
-      const response = await axios.post(
-        process.env.REACT_APP_API_URL + '/generate-pdf-from-logic',
-        {
-          rooms: previewData.rooms,
-          assignedData: previewData.assignedData,
-          unallocated: previewData.unallocated || []
-        },
-        { responseType: 'blob' }
-      );
-
+      const response = await axios.post(process.env.REACT_APP_API_URL + '/generate-pdf-from-logic', {
+        rooms: previewData.rooms, assignedData: previewData.assignedData, unallocated: previewData.unallocated || []
+      }, { responseType: 'blob' });
       const fileURL = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
       const link = document.createElement('a');
       link.href = fileURL;
-      link.download = `Seating_Plan_Architect.pdf`;
+      link.download = `Seating_Plan.pdf`;
       link.click();
-    } catch (err) {
-      setError("Failed to generate PDF.");
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { setError("Failed to generate PDF."); }
+    finally { setLoading(false); }
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-10 animate-fade-in pb-20">
-
-      {/* Header */}
-      <div>
-        <span className="text-teal-400 font-bold tracking-[0.2em] text-[10px] uppercase mb-2 block">Spatial Reasoning</span>
-        <div className="flex items-center justify-between">
-          <h2 className="font-serif text-3xl font-bold text-white flex items-center gap-3">
-            <FiCheckSquare className="text-teal-400" />
-            Seating Architect
-          </h2>
-          {previewData && (
-            <div className="flex gap-4">
-              <button
-                onClick={() => setPreviewData(null)}
-                className="bg-white/5 hover:bg-white/10 text-white px-6 py-2.5 rounded-xl border border-white/5 transition-all text-sm font-bold flex items-center gap-2"
-              >
-                <FiX /> Reset
-              </button>
-              <button
-                onClick={handleDownloadPDF}
-                disabled={loading}
-                className="bg-gradient-to-br from-teal-400 to-cyan-500 text-slate-950 px-8 py-2.5 rounded-xl font-bold text-sm shadow-[0_0_20px_rgba(0,229,195,0.3)] hover:shadow-[0_0_40px_rgba(0,229,195,0.5)] transition-all flex items-center gap-2"
-              >
-                {loading ? 'Processing...' : <><FiDownload /> Architect PDF</>}
-              </button>
-            </div>
-          )}
+    <div className="fade-in space-y-8">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 6 }}>Seating Architect</h1>
+          <p style={{ color: theme.textSub }}>Engineered seating arrangements with spatial logic</p>
         </div>
+        {previewData && (
+          <div style={{ display: 'flex', gap: 12 }}>
+            <Btn variant="ghost" onClick={() => setPreviewData(null)}>Reset</Btn>
+            <Btn onClick={handleDownloadPDF} disabled={loading}>
+              {loading ? <span className="spin">⟳</span> : <Icon name="download" size={16} />}
+              Architect PDF
+            </Btn>
+          </div>
+        )}
       </div>
 
       {!previewData ? (
-        <div className="grid lg:grid-cols-5 gap-10">
-
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
           <div className="lg:col-span-3 space-y-8">
-            <div className="bg-card backdrop-blur-xl border border-white/5 rounded-[40px] p-10 shadow-2xl">
-              <h3 className="text-white font-bold text-sm uppercase tracking-widest mb-8 flex items-center gap-3">
-                <FiLayout className="text-teal-400" />
-                Layout Logic
+            <Card>
+              <h3 style={{ fontWeight: 700, marginBottom: 20, display: "flex", alignItems: "center", gap: 8 }}>
+                <Icon name="chart" size={18} color={theme.accent} /> Layout Logic
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {[
-                  { id: 'standard', label: 'Standard Z' },
-                  { id: 'staggered', label: 'Staggered' },
-                  { id: 'snake', label: 'Snake S' },
-                  { id: 'snake-vertical', label: 'Vert. Snake' },
-                  { id: 'checkerboard', label: 'Checkerboard' },
-                  { id: 'hybrid', label: 'Hybrid Auto' },
-                ].map((p) => (
-                  <div
-                    key={p.id}
-                    className={`p-4 rounded-2xl border transition-all cursor-pointer text-center group
-                                   ${pattern === p.id
-                        ? 'bg-teal-500/10 border-teal-500/50 shadow-[0_0_15px_rgba(0,229,195,0.1)]'
-                        : 'bg-white/5 border-white/5 hover:border-white/20'}`}
-                    onClick={() => setPattern(p.id)}
-                  >
-                    <div className={`w-8 h-8 rounded-lg mx-auto mb-3 border border-white/10 group-hover:scale-110 transition-transform flex items-center justify-center
-                                       ${pattern === p.id ? 'bg-teal-400 text-slate-900' : 'bg-white/5 text-slate-500'}`}>
-                      {p.label[0]}
-                    </div>
-                    <span className={`text-[10px] font-black uppercase tracking-widest ${pattern === p.id ? 'text-teal-400' : 'text-slate-500'}`}>
-                      {p.label}
-                    </span>
+                {patterns.map((p) => (
+                  <div key={p.id} onClick={() => setPattern(p.id)} style={{
+                    padding: 16, borderRadius: 12, border: `1px solid ${pattern === p.id ? theme.accent : theme.surfaceAlt}`,
+                    background: pattern === p.id ? theme.accentSoft : theme.surfaceAlt, cursor: 'pointer', transition: 'all 0.2s', textAlign: 'center'
+                  }}>
+                    <div style={{ color: pattern === p.id ? theme.accent : theme.textSub, fontWeight: 700, fontSize: 13 }}>{p.label}</div>
                   </div>
                 ))}
               </div>
-            </div>
+            </Card>
 
-            <div className="bg-card backdrop-blur-xl border border-white/5 rounded-[40px] p-10 shadow-2xl">
-              <h3 className="text-white font-bold text-sm uppercase tracking-widest mb-8 flex items-center gap-3">
-                <FiUploadCloud className="text-teal-400" />
-                Data Integration
+            <Card>
+              <h3 style={{ fontWeight: 700, marginBottom: 20, display: "flex", alignItems: "center", gap: 8 }}>
+                <Icon name="upload" size={18} color={theme.accent} /> Data Integration
               </h3>
               <label
-                htmlFor="fileInput"
-                className={`relative border-2 border-dashed rounded-[32px] p-16 flex flex-col items-center justify-center transition-all cursor-pointer group
-                               ${isDragging ? 'bg-teal-500/10 border-teal-400' : 'bg-white/5 border-white/10 hover:border-teal-500/30'}`}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
+                className={`relative border-2 border-dashed rounded-2xl p-12 flex flex-col items-center justify-center transition-all cursor-pointer 
+                    ${isDragging ? 'bg-blue-500/10 border-blue-500' : 'bg-surface-alt border-border-subtle hover:border-blue-500/50'}`}
+                onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
+                style={{ background: theme.surfaceAlt, borderColor: isDragging ? theme.accent : '#1e2d45', minHeight: 180 }}
               >
-                <input type="file" accept=".csv, .xls, .xlsx" onChange={handleFileChange} id="fileInput" className="hidden" />
-                <div className="w-20 h-20 bg-teal-500/10 rounded-3xl flex items-center justify-center text-teal-400 mb-6 group-hover:scale-110 transition-transform">
-                  {studentFile ? <FiFile size={40} /> : <FiUploadCloud size={40} />}
+                <input type="file" accept=".csv, .xls, .xlsx" onChange={handleFileChange} className="hidden" />
+                <div style={{ width: 56, height: 56, background: theme.accentSoft, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', color: theme.accent, marginBottom: 16 }}>
+                  <Icon name={studentFile ? "check" : "upload"} size={28} />
                 </div>
                 {studentFile ? (
-                  <div className="text-center">
-                    <p className="text-white font-bold mb-1">{studentFile.name}</p>
-                    <p className="text-teal-400/60 text-[10px] font-black uppercase tracking-widest">Selected Component</p>
+                  <div style={{ textAlign: 'center' }}>
+                    <p style={{ fontWeight: 700, marginBottom: 4 }}>{studentFile.name}</p>
+                    <Badge color="blue">File Selected</Badge>
                   </div>
                 ) : (
-                  <div className="text-center">
-                    <p className="text-slate-300 font-bold mb-1 text-lg">Drop master seating plan</p>
-                    <p className="text-slate-500 text-sm">XLSX, CSV or manual input support</p>
+                  <div style={{ textAlign: 'center' }}>
+                    <p style={{ fontWeight: 700, marginBottom: 4 }}>Drop seating plan file</p>
+                    <p style={{ fontSize: 13, color: theme.textMuted }}>XLSX or CSV supported</p>
                   </div>
                 )}
               </label>
-
-              <button
-                onClick={handlePreview}
-                disabled={loading || !studentFile}
-                className="w-full mt-10 bg-white/5 hover:bg-white/10 text-white font-black py-5 rounded-[24px] border border-white/10 hover:border-teal-500/30 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
-              >
-                {loading ? 'Simulating Space...' : 'Initialize Preview Engine'}
-              </button>
-              {error && <p className="mt-4 text-rose-400 text-xs font-bold text-center uppercase tracking-widest">{error}</p>}
-            </div>
+              <Btn onClick={handlePreview} disabled={loading || !studentFile} style={{ width: '100%', marginTop: 24, justifyContent: 'center' }}>
+                {loading ? <><span className="spin">⟳</span> Initializing...</> : 'Initialize Preview Engine'}
+              </Btn>
+              {error && <p style={{ marginTop: 16, color: '#ef4444', fontSize: 13, fontWeight: 600, textAlign: 'center' }}>{error}</p>}
+            </Card>
           </div>
 
           <div className="lg:col-span-2 space-y-8">
-            <div className="bg-gradient-to-br from-teal-500/20 to-cyan-500/20 backdrop-blur-2xl border border-teal-500/20 rounded-[40px] p-10">
-              <FiInfo className="text-teal-400 mb-6" size={32} />
-              <h4 className="text-white font-serif text-2xl font-bold mb-4">Neural Allocation</h4>
-              <p className="text-slate-300 text-sm leading-relaxed mb-6 font-light">
+            <Card style={{ background: theme.accentSoft, border: `1px solid ${theme.accent}30` }}>
+              <Icon name="info" color={theme.accent} size={32} />
+              <h4 style={{ fontWeight: 700, fontSize: 18, marginTop: 16, marginBottom: 8 }}>Neural Allocation</h4>
+              <p style={{ fontSize: 14, color: theme.textSub, lineHeight: 1.6, marginBottom: 20 }}>
                 Our engine automatically handles branch distribution to minimize proximity between students from the same department.
               </p>
-              <ul className="space-y-4">
-                {[
-                  'Supports custom room naming',
-                  'Automated roll number sorting',
-                  'Real-time capacity tracking',
-                  'Manual override capability'
-                ].map((item, i) => (
-                  <li key={i} className="flex items-center gap-3 text-xs text-teal-300/80 font-bold tracking-wide uppercase">
-                    <div className="w-1.5 h-1.5 bg-teal-400 rounded-full shadow-[0_0_10px_#00e5c3]"></div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {['Custom room naming', 'Roll number sorting', 'Capacity tracking', 'Manual overrides'].map((item, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: theme.accent, fontWeight: 600 }}>
+                    <div style={{ width: 6, height: 6, background: theme.accent, borderRadius: '50%' }} />
                     {item}
-                  </li>
+                  </div>
                 ))}
-              </ul>
-            </div>
-
-            <div className="p-10 border border-white/5 rounded-[40px] bg-white/[0.02]">
-              <h5 className="text-slate-500 font-black text-[10px] uppercase tracking-[0.2em] mb-4">System Status</h5>
-              <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
-                <div className="w-10 h-10 bg-teal-500/10 rounded-lg flex items-center justify-center text-teal-400">
-                  <FiCheckSquare />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-white uppercase tracking-widest">Ready</p>
-                  <p className="text-[10px] text-slate-500">Awaiting Data Core</p>
-                </div>
               </div>
-            </div>
+            </Card>
+            <Card style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div style={{ width: 42, height: 42, background: theme.surfaceAlt, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', color: theme.textMuted }}>
+                <Icon name="check" size={20} />
+              </div>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 14 }}>System Status</div>
+                <div style={{ fontSize: 12, color: theme.textMuted }}>Ready for data core</div>
+              </div>
+            </Card>
           </div>
-
         </div>
       ) : (
-        <div className="space-y-12 animate-fade-up">
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="fade-in space-y-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
               { label: 'Total Rooms', value: previewData.rooms.length },
-              { label: 'Total Capacity', value: previewData.rooms.reduce((acc, r) => acc + (r.rows * r.cols * 2), 0) },
-              { label: 'Students Placed', value: previewData.total_students },
+              { label: 'Capacity', value: previewData.rooms.reduce((acc, r) => acc + (r.rows * r.cols * 2), 0) },
+              { label: 'Placed', value: previewData.total_students },
               { label: 'Unallocated', value: previewData.unallocated?.length || 0 },
             ].map((stat, i) => (
-              <div key={i} className="bg-white/5 border border-white/5 p-6 rounded-[24px] backdrop-blur-xl">
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{stat.label}</p>
-                <p className="text-2xl font-serif font-bold text-white uppercase tracking-widest leading-none">{stat.value}</p>
-              </div>
+              <Card key={i}>
+                <p style={{ fontSize: 12, color: theme.textSub, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>{stat.label}</p>
+                <p style={{ fontSize: 24, fontWeight: 800 }}>{stat.value}</p>
+              </Card>
             ))}
           </div>
 
-          <div className="grid lg:grid-cols-1 gap-12">
+          <div className="space-y-8">
             {previewData.rooms.map((room) => {
               const roomData = previewData.assignedData[room.name];
               if (!roomData) return null;
-
               const pairs = roomData.pairs;
-              const numColumns = 4;
+              const numColumns = window.innerWidth > 1200 ? 4 : window.innerWidth > 768 ? 2 : 1;
               const rowsPerColumn = Math.ceil(pairs.length / numColumns);
 
               return (
-                <div key={room.name} className="bg-card backdrop-blur-xl border border-white/10 rounded-[48px] overflow-hidden shadow-2xl">
-
-                  <div className="bg-white/5 px-10 py-8 border-b border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <Card key={room.name} style={{ padding: 0, overflow: 'hidden' }}>
+                  <div style={{ padding: "20px 24px", borderBottom: `1px solid #1e2d45`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)' }}>
                     <div>
-                      <span className="text-teal-400 font-bold tracking-[0.2em] text-[10px] uppercase mb-1 block">Component: {room.name}</span>
-                      <h3 className="font-serif text-2xl font-bold text-white">{room.college || "Inst. Examination Cell"}</h3>
+                      <Badge color="blue">{room.name}</Badge>
+                      <h3 style={{ fontWeight: 700, fontSize: 18, marginTop: 4 }}>{room.college || "Inst. Examination Cell"}</h3>
                     </div>
-                    <div className="flex gap-8">
-                      <div>
-                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Students</p>
-                        <p className="text-white font-bold">{pairs.reduce((acc, p) => acc + (p.s1 ? 1 : 0) + (p.s2 ? 1 : 0), 0)}</p>
+                    <div style={{ display: 'flex', gap: 16 }}>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: 11, color: theme.textMuted, fontWeight: 700 }}>STUDENTS</div>
+                        <div style={{ fontWeight: 700 }}>{pairs.reduce((acc, p) => acc + (p.s1 ? 1 : 0) + (p.s2 ? 1 : 0), 0)}</div>
                       </div>
-                      <div className="w-px h-10 bg-white/5"></div>
-                      <div>
-                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Capacity</p>
-                        <p className="text-white font-bold">{room.rows * room.cols * 2}</p>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: 11, color: theme.textMuted, fontWeight: 700 }}>CAPACITY</div>
+                        <div style={{ fontWeight: 700 }}>{room.rows * room.cols * 2}</div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="p-10">
-                    <div className="bg-white/5 rounded-2xl p-3 text-center text-[10px] font-black tracking-[0.5em] text-cyan-400/40 uppercase mb-5 border border-white/5">
-                      White Board Area
+                  <div style={{ padding: 24 }}>
+                    <div style={{ padding: 8, background: theme.surfaceAlt, borderRadius: 8, textAlign: 'center', fontSize: 11, fontWeight: 800, color: theme.textMuted, letterSpacing: '4px', marginBottom: 20 }}>
+                      WHITE BOARD AREA
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
@@ -328,39 +256,34 @@ function SeatingPlanner() {
                         const startIdx = colIndex * rowsPerColumn;
                         const endIdx = Math.min(startIdx + rowsPerColumn, pairs.length);
                         const columnPairs = pairs.slice(startIdx, endIdx);
-
                         if (columnPairs.length === 0) return null;
 
                         return (
-                          <div key={colIndex} className="space-y-4">
-                            <table className="w-full text-left">
+                          <div key={colIndex}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                               <thead>
-                                <tr className="border-b border-white/5 text-slate-500 text-[9px] uppercase font-black tracking-widest">
-                                  <th className="pb-3 px-2">#</th>
-                                  <th className="pb-3 px-2">S1</th>
-                                  <th className="pb-3 px-2">S2</th>
+                                <tr style={{ borderBottom: `1px solid #1e2d45`, fontSize: 10, color: theme.textMuted, fontWeight: 800 }}>
+                                  <th style={{ padding: '0 8px 8px 8px', textAlign: 'left' }}>#</th>
+                                  <th style={{ padding: '0 8px 8px 8px', textAlign: 'left' }}>S1</th>
+                                  <th style={{ padding: '0 8px 8px 8px', textAlign: 'left' }}>S2</th>
                                 </tr>
                               </thead>
-                              <tbody className="divide-y divide-white/[0.02]">
+                              <tbody>
                                 {columnPairs.map((pair, i) => {
                                   const originalIndex = startIdx + i;
                                   return (
-                                    <tr key={originalIndex} className="group">
-                                      <td className="py-2.5 px-2 text-[10px] font-bold text-slate-700">{originalIndex + 1}</td>
-                                      <td className="py-2.5 px-2">
+                                    <tr key={originalIndex} style={{ borderBottom: `1px solid rgba(30, 45, 69, 0.3)` }}>
+                                      <td style={{ padding: '8px', fontSize: 11, color: theme.textMuted, fontWeight: 700 }}>{originalIndex + 1}</td>
+                                      <td style={{ padding: '8px' }}>
                                         <input
-                                          type="text"
-                                          className="bg-transparent border-none outline-none text-[11px] text-white font-medium focus:text-teal-400 transition-colors w-full"
-                                          value={pair.s1}
-                                          onChange={(e) => handleStudentChange(room.name, originalIndex, 's1', e.target.value)}
+                                          style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: 11, fontWeight: 500, width: '100%', outline: 'none' }}
+                                          value={pair.s1} onChange={(e) => handleStudentChange(room.name, originalIndex, 's1', e.target.value)}
                                         />
                                       </td>
-                                      <td className="py-2.5 px-2">
+                                      <td style={{ padding: '8px' }}>
                                         <input
-                                          type="text"
-                                          className="bg-transparent border-none outline-none text-[11px] text-white font-medium focus:text-cyan-400 transition-colors w-full"
-                                          value={pair.s2}
-                                          onChange={(e) => handleStudentChange(room.name, originalIndex, 's2', e.target.value)}
+                                          style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: 11, fontWeight: 500, width: '100%', outline: 'none' }}
+                                          value={pair.s2} onChange={(e) => handleStudentChange(room.name, originalIndex, 's2', e.target.value)}
                                         />
                                       </td>
                                     </tr>
@@ -375,22 +298,19 @@ function SeatingPlanner() {
                   </div>
 
                   {roomData.summary && (
-                    <div className="px-10 py-6 bg-white/[0.02] border-t border-white/5">
-                      <div className="flex flex-wrap gap-4">
-                        {Object.entries(roomData.summary).map(([branch, count]) => (
-                          <div key={branch} className="bg-white/5 px-4 py-1.5 rounded-full border border-white/5 flex items-center gap-2">
-                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{branch}</span>
-                            <span className="text-xs font-serif font-black text-teal-400 tracking-widest">{count}</span>
-                          </div>
-                        ))}
-                      </div>
+                    <div style={{ padding: "16px 24px", background: 'rgba(255,255,255,0.01)', borderTop: `1px solid #1e2d45`, display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+                      {Object.entries(roomData.summary).map(([branch, count]) => (
+                        <div key={branch} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ fontSize: 11, fontWeight: 800, color: theme.textMuted }}>{branch}</span>
+                          <Badge color="green">{count}</Badge>
+                        </div>
+                      ))}
                     </div>
                   )}
-                </div>
+                </Card>
               );
             })}
           </div>
-
         </div>
       )}
     </div>

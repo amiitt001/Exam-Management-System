@@ -1,13 +1,19 @@
 import React, { useState } from 'react';
-import { FiCalendar, FiClock, FiBook, FiCheckCircle, FiInfo, FiZap } from 'react-icons/fi';
+import { Card, Icon, Btn, Badge } from '../ui';
 
 const ExamSchedule = () => {
   const [loading, setLoading] = useState(false);
   const [schedule, setSchedule] = useState(null);
 
+  const theme = {
+    accent: "#3b82f6",
+    textSub: "#94a3b8",
+    surfaceAlt: "#1a2235",
+    textMuted: "#64748b",
+  };
+
   const generateSchedule = () => {
     setLoading(true);
-    // Simulate complex computation
     setTimeout(() => {
       setSchedule([
         {
@@ -33,51 +39,39 @@ const ExamSchedule = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-10 animate-fade-in pb-20">
-
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div className="fade-in space-y-8 pb-20">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <span className="text-teal-400 font-bold tracking-[0.2em] text-[10px] uppercase mb-2 block">Temporal Logic</span>
-          <h2 className="font-serif text-3xl font-bold text-white flex items-center gap-3">
-            <FiCalendar className="text-teal-400" />
-            Exam Schedule
-          </h2>
+          <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 6 }}>Exam Schedule</h1>
+          <p style={{ color: theme.textSub }}>Engineered temporal logic for global examination windows</p>
         </div>
         {!schedule && (
-          <button
-            onClick={generateSchedule}
-            disabled={loading}
-            className="bg-gradient-to-br from-teal-400 to-cyan-500 text-slate-950 font-black px-8 py-3 rounded-2xl hover:shadow-[0_0_30px_rgba(0,229,195,0.4)] transition-all flex items-center gap-2"
-          >
-            {loading ? <span className="w-5 h-5 border-2 border-slate-900/30 border-t-slate-900 rounded-full animate-spin"></span> : <><FiZap /> Synthesize Timeline</>}
-          </button>
+          <Btn onClick={generateSchedule} disabled={loading}>
+            {loading ? <span className="spin">⟳</span> : <Icon name="chart" size={16} />}
+            Synthesize Timeline
+          </Btn>
         )}
       </div>
 
       {!schedule ? (
-        <div className="grid lg:grid-cols-3 gap-8 text-white">
-          <div className="lg:col-span-2 bg-card backdrop-blur-xl border border-white/5 rounded-[40px] p-12 flex flex-col items-center justify-center text-center">
-            <div className="w-24 h-24 bg-teal-500/10 rounded-full flex items-center justify-center text-teal-400 mb-8 border border-teal-500/20">
-              <FiClock size={48} className="animate-pulse" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 text-white">
+          <Card className="lg:col-span-2" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 450, textAlign: 'center' }}>
+            <div style={{ width: 80, height: 80, background: 'rgba(59, 130, 246, 0.05)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: theme.accent, marginBottom: 24, border: `1px solid ${theme.accent}30` }}>
+              <Icon name="calendar" size={40} />
             </div>
-            <h3 className="text-2xl font-serif font-bold mb-4">No Timeline Generated</h3>
-            <p className="text-slate-400 max-w-md font-light leading-relaxed">
+            <h3 style={{ fontSize: 22, fontWeight: 700, marginBottom: 12 }}>No Timeline Generated</h3>
+            <p style={{ color: theme.textSub, maxWidth: 360, lineHeight: 1.6 }}>
               Our conflict-free engine requires the subject list and student counts to architect a localized examination schedule.
             </p>
-            <div className="mt-10 flex gap-4">
-              <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-600">
-                <div className="w-2 h-2 bg-teal-500/50 rounded-full"></div> Constraint Based
-              </div>
-              <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-600">
-                <div className="w-2 h-2 bg-cyan-500/50 rounded-full"></div> Gap Optimized
-              </div>
+            <div style={{ marginTop: 32, display: 'flex', gap: 16 }}>
+              <Badge color="blue">Constraint Based</Badge>
+              <Badge color="teal">Gap Optimized</Badge>
             </div>
-          </div>
+          </Card>
 
-          <div className="bg-teal-500/5 border border-teal-500/10 rounded-[40px] p-10 space-y-8">
-            <FiInfo className="text-teal-400" size={32} />
-            <h4 className="text-xl font-bold">Optimization Engine</h4>
+          <Card style={{ background: 'rgba(59, 130, 246, 0.03)', border: `1px solid ${theme.accent}20` }}>
+            <Icon name="info" color={theme.accent} size={32} />
+            <h4 style={{ fontSize: 18, fontWeight: 700, marginTop: 16, marginBottom: 20 }}>Optimization Engine</h4>
             <div className="space-y-6">
               {[
                 { title: 'Conflict Resolution', desc: 'Ensures no student has overlapping examinations.' },
@@ -85,59 +79,54 @@ const ExamSchedule = () => {
                 { title: 'Room Balancing', desc: 'Distributes load across campus facilities evenly.' }
               ].map((feature, i) => (
                 <div key={i} className="space-y-1">
-                  <p className="text-[10px] font-black text-teal-400 uppercase tracking-widest">{feature.title}</p>
-                  <p className="text-slate-400 text-sm font-light">{feature.desc}</p>
+                  <p style={{ fontSize: 11, fontWeight: 800, color: theme.accent, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{feature.title}</p>
+                  <p style={{ color: theme.textSub, fontSize: 13, lineHeight: 1.5 }}>{feature.desc}</p>
                 </div>
               ))}
             </div>
-          </div>
+          </Card>
         </div>
       ) : (
-        <div className="space-y-10 animate-fade-up">
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {schedule.map((day, dIdx) => (
-              <div key={day.id} className="bg-card backdrop-blur-xl border border-white/5 rounded-[40px] overflow-hidden shadow-2xl group transition-all hover:border-teal-500/30">
-                <div className="bg-white/5 px-8 py-6 border-b border-white/5">
-                  <h3 className="text-teal-400 font-bold uppercase tracking-widest text-xs mb-1">Session {day.id}</h3>
-                  <p className="text-white font-serif text-xl font-bold">{day.date}</p>
+        <div className="fade-in space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {schedule.map((day) => (
+              <Card key={day.id} style={{ padding: 0, overflow: 'hidden' }}>
+                <div style={{ padding: '20px 24px', background: 'rgba(255,255,255,0.02)', borderBottom: `1px solid #1e2d45` }}>
+                  <Badge color="blue">SESSION {day.id}</Badge>
+                  <h3 style={{ fontSize: 18, fontWeight: 700, marginTop: 4 }}>{day.date}</h3>
                 </div>
-                <div className="p-8 space-y-6">
+                <div style={{ padding: 24 }} className="space-y-6">
                   {day.subjects.map((sub, sIdx) => (
-                    <div key={sIdx} className="relative pl-6 border-l border-white/10 hover:border-teal-400 transition-colors">
-                      <div className="absolute -left-[5px] top-1.5 w-[9px] h-[9px] bg-void border-2 border-slate-700 rounded-full group-hover:border-teal-400 transition-colors"></div>
-                      <div className="flex justify-between items-start mb-1">
-                        <p className="text-white font-bold text-sm tracking-tight">{sub.name}</p>
-                        <p className="text-[10px] font-black text-slate-500 uppercase">{sub.time}</p>
+                    <div key={sIdx} style={{ paddingLeft: 16, borderLeft: `2px solid #1e2d45`, position: 'relative' }}>
+                      <div style={{ position: 'absolute', left: -5, top: 4, width: 8, height: 8, background: '#1e2d45', borderRadius: '50%', border: '2px solid #0a0f1a' }} />
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 4 }}>
+                        <p style={{ fontWeight: 700, fontSize: 14 }}>{sub.name}</p>
+                        <span style={{ fontSize: 10, fontWeight: 800, color: theme.textMuted }}>{sub.time}</span>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-[10px] text-teal-500/80 font-bold uppercase tracking-widest">{sub.code}</span>
-                        <div className="w-1 h-1 bg-white/10 rounded-full"></div>
-                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{sub.room}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: theme.accent }}>{sub.code}</span>
+                        <div style={{ width: 4, height: 4, background: '#1e2d45', borderRadius: '50%' }} />
+                        <span style={{ fontSize: 11, fontWeight: 700, color: theme.textMuted }}>{sub.room}</span>
                       </div>
                     </div>
                   ))}
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
 
-          <div className="bg-white/5 border border-white/5 rounded-[32px] p-8 flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-teal-500/10 rounded-2xl flex items-center justify-center text-teal-400 shadow-[0_0_15px_rgba(0,229,195,0.2)]">
-                <FiCheckCircle size={24} />
+          <Card style={{ padding: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div style={{ width: 48, height: 48, background: 'rgba(16, 185, 129, 0.1)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981' }}>
+                <Icon name="check" size={24} />
               </div>
               <div>
-                <p className="text-white font-bold">Schedule Finalized</p>
-                <p className="text-slate-500 text-xs">All constraints satisfied by the neural architect.</p>
+                <p style={{ fontWeight: 700 }}>Schedule Finalized</p>
+                <p style={{ fontSize: 13, color: theme.textSub }}>All constraints satisfied by the neural architect.</p>
               </div>
             </div>
-            <button
-              onClick={() => setSchedule(null)}
-              className="text-slate-500 text-[10px] font-black uppercase tracking-widest hover:text-white transition-colors border-b border-transparent hover:border-white pb-1"
-            >
-              Recalculate Constraints
-            </button>
-          </div>
+            <Btn variant="ghost" small onClick={() => setSchedule(null)}>Recalculate Constraints</Btn>
+          </Card>
         </div>
       )}
     </div>
