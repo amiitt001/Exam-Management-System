@@ -1,18 +1,102 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss/base";
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 
-/* App base overrides (Tailwind will handle typography and spacing) */
-html, body, #root {
+:root {
+  --bg-void: #03040a;
+  --bg-deep: #070b14;
+  --bg-card: rgba(11, 18, 35, 0.85);
+  --bg-card-hover: rgba(15, 25, 48, 0.95);
+  --accent-teal: #00e5c3;
+  --accent-cyan: #0af0ff;
+  --accent-gold: #f5c842;
+  --accent-rose: #ff5fa0;
+  --text-primary: #e8f0ff;
+  --text-secondary: #7a90b8;
+  --text-dim: #3d4f6e;
+  --border-subtle: rgba(0, 229, 195, 0.12);
+  --border-active: rgba(0, 229, 195, 0.45);
+  --glow-teal: 0 0 40px rgba(0, 229, 195, 0.2);
+  --radius: 16px;
+}
+
+/* App base overrides */
+html,
+body,
+#root {
   height: 100%;
 }
+
 body {
-  background-color: #111827;
-  color: #f3f4f6;
-  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  background: var(--bg-void);
+  color: var(--text-primary);
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+}
+
+/* ── BACKGROUND CANVAS ── */
+.bg-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(0, 229, 195, 0.07) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 90% 80%, rgba(10, 240, 255, 0.05) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 10% 60%, rgba(245, 200, 66, 0.04) 0%, transparent 60%);
+}
+
+.bg-grid {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(0, 229, 195, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 229, 195, 0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* ── UTILITIES ── */
+.bg-void {
+  background-color: var(--bg-void);
+}
+
+.bg-card {
+  background-color: var(--bg-card);
+  backdrop-filter: blur(24px);
+}
+
+/* ── FORM OVERRIDES ── */
+input,
+textarea,
+select {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(255, 255, 255, 0.3) !important;
+}
+
+@keyframes orb-drift {
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  33% {
+    transform: translate(30px, -40px) scale(1.05);
+  }
+
+  66% {
+    transform: translate(-20px, 30px) scale(0.97);
+  }
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+  font-family: 'JetBrains Mono', source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }

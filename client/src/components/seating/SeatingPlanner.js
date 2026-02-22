@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import '../../styles/App.css';
+import { FiCheckSquare, FiUploadCloud, FiFile, FiDownload, FiX, FiInfo, FiLayout } from 'react-icons/fi';
 
 function SeatingPlanner() {
   const [studentFile, setStudentFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [previewData, setPreviewData] = useState(null); // { rooms: [], assignedData: {} }
+  const [previewData, setPreviewData] = useState(null);
   const [pattern, setPattern] = useState('standard');
 
-  // --- Drag-and-Drop Handlers ---
   const handleDragOver = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); };
   const handleDragLeave = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); };
   const handleDrop = (e) => {
@@ -29,23 +28,19 @@ function SeatingPlanner() {
     }
   };
 
-  // --- 1. Fetch Preview ---
   const handlePreview = async (e) => {
     e.preventDefault();
-      if (!studentFile) {
-        setError("Please upload a master seating plan file.");
-        return;
-      }
+    if (!studentFile) {
+      setError("Please upload a master seating plan file.");
+      return;
+    }
     setLoading(true);
     setError(null);
-    setPreviewData(null);
 
     try {
       const formData = new FormData();
-      // Python service expects field name 'file'
       formData.append('file', studentFile);
 
-      // 1) Upload and parse the Excel to get a data_id
       const uploadRes = await axios.post(
         process.env.REACT_APP_API_URL + '/upload',
         formData,
@@ -53,11 +48,7 @@ function SeatingPlanner() {
       );
 
       const { data_id } = uploadRes.data;
-      if (!data_id) {
-        throw new Error('Upload failed: missing data_id');
-      }
 
-      // 2) Calculate seating with selected pattern
       const calcRes = await axios.post(
         process.env.REACT_APP_API_URL + '/calculate',
         { data_id, pattern }
@@ -65,7 +56,6 @@ function SeatingPlanner() {
 
       const { rooms, unallocated, total_students } = calcRes.data;
 
-      // 3) Convert processed rooms grid to assignedData for UI
       const buildAssignedData = (processedRooms) => {
         const assigned = {};
         processedRooms.forEach((room) => {
@@ -91,19 +81,15 @@ function SeatingPlanner() {
         return assigned;
       };
 
-      const assignedData = buildAssignedData(rooms);
-
-      setPreviewData({ rooms, assignedData, unallocated, total_students });
+      setPreviewData({ rooms, assignedData: buildAssignedData(rooms), unallocated, total_students });
 
     } catch (err) {
-      console.error(err);
       setError(err.response?.data?.error || "Failed to generate preview.");
     } finally {
       setLoading(false);
     }
   };
 
-  // --- 2. Handle Edits ---
   const handleStudentChange = (roomName, pairIndex, field, value) => {
     const newData = { ...previewData };
     const roomData = newData.assignedData[roomName];
@@ -113,12 +99,9 @@ function SeatingPlanner() {
     }
   };
 
-  // --- 3. Generate PDF from (Edited) Data ---
   const handleDownloadPDF = async () => {
     setLoading(true);
-    setError(null);
     try {
-      // Call python endpoint that accepts rooms + assignedData and returns PDF
       const response = await axios.post(
         process.env.REACT_APP_API_URL + '/generate-pdf-from-logic',
         {
@@ -129,235 +112,285 @@ function SeatingPlanner() {
         { responseType: 'blob' }
       );
 
-      const file = new Blob([response.data], { type: 'application/pdf' });
-      const fileURL = URL.createObjectURL(file);
+      const fileURL = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
       const link = document.createElement('a');
       link.href = fileURL;
-      link.setAttribute('download', `Seating_Plan_Output.pdf`);
-      document.body.appendChild(link);
+      link.download = `Seating_Plan_Architect.pdf`;
       link.click();
-      link.parentNode.removeChild(link);
-
     } catch (err) {
-      console.error(err);
-      setError("Failed to generate PDF from data.");
+      setError("Failed to generate PDF.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="exam-form">
-      <h2 style={{ textAlign: 'center', fontSize: '2rem', color: 'var(--primary)' }}>Seating Plan Generator</h2>
+    <div className="max-w-7xl mx-auto space-y-10 animate-fade-in pb-20">
+
+      {/* Header */}
+      <div>
+        <span className="text-teal-400 font-bold tracking-[0.2em] text-[10px] uppercase mb-2 block">Spatial Reasoning</span>
+        <div className="flex items-center justify-between">
+          <h2 className="font-serif text-3xl font-bold text-white flex items-center gap-3">
+            <FiCheckSquare className="text-teal-400" />
+            Seating Architect
+          </h2>
+          {previewData && (
+            <div className="flex gap-4">
+              <button
+                onClick={() => setPreviewData(null)}
+                className="bg-white/5 hover:bg-white/10 text-white px-6 py-2.5 rounded-xl border border-white/5 transition-all text-sm font-bold flex items-center gap-2"
+              >
+                <FiX /> Reset
+              </button>
+              <button
+                onClick={handleDownloadPDF}
+                disabled={loading}
+                className="bg-gradient-to-br from-teal-400 to-cyan-500 text-slate-950 px-8 py-2.5 rounded-xl font-bold text-sm shadow-[0_0_20px_rgba(0,229,195,0.3)] hover:shadow-[0_0_40px_rgba(0,229,195,0.5)] transition-all flex items-center gap-2"
+              >
+                {loading ? 'Processing...' : <><FiDownload /> Architect PDF</>}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
 
       {!previewData ? (
-        <>
-          <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '2rem' }}>
-            Upload your master Excel file to preview and edit the seating plan.
-          </p>
-          <form onSubmit={handlePreview}>
-            <div className="form-group">
-              <label>Select Seating Pattern</label>
-              <div className="pattern-grid">
+        <div className="grid lg:grid-cols-5 gap-10">
+
+          <div className="lg:col-span-3 space-y-8">
+            <div className="bg-card backdrop-blur-xl border border-white/5 rounded-[40px] p-10 shadow-2xl">
+              <h3 className="text-white font-bold text-sm uppercase tracking-widest mb-8 flex items-center gap-3">
+                <FiLayout className="text-teal-400" />
+                Layout Logic
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {[
-                  { id: 'standard', label: 'Standard (Z)', class: 'preview-standard' },
-                  { id: 'staggered', label: 'Staggered', class: 'preview-staggered' },
-                  { id: 'snake', label: 'Snake (S)', class: 'preview-snake' },
-                  { id: 'snake-vertical', label: 'Vert. Snake', class: 'preview-columnar' },
-                  { id: 'columnar', label: 'Columnar', class: 'preview-columnar' },
-                  { id: 'checkerboard', label: 'Checkerboard', class: 'preview-staggered' },
-                  { id: 'single', label: 'Single Seat', class: 'preview-standard' },
-                  { id: 'alternate-rows', label: 'Alt. Rows', class: 'preview-standard' },
-                  { id: 'hybrid', label: 'Hybrid', class: 'preview-standard' },
+                  { id: 'standard', label: 'Standard Z' },
+                  { id: 'staggered', label: 'Staggered' },
+                  { id: 'snake', label: 'Snake S' },
+                  { id: 'snake-vertical', label: 'Vert. Snake' },
+                  { id: 'checkerboard', label: 'Checkerboard' },
+                  { id: 'hybrid', label: 'Hybrid Auto' },
                 ].map((p) => (
                   <div
                     key={p.id}
-                    className={`pattern-card ${pattern === p.id ? 'selected' : ''}`}
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer text-center group
+                                   ${pattern === p.id
+                        ? 'bg-teal-500/10 border-teal-500/50 shadow-[0_0_15px_rgba(0,229,195,0.1)]'
+                        : 'bg-white/5 border-white/5 hover:border-white/20'}`}
                     onClick={() => setPattern(p.id)}
                   >
-                    <div className={`pattern-preview ${p.class}`}>
-                      <div></div><div></div><div></div><div></div>
+                    <div className={`w-8 h-8 rounded-lg mx-auto mb-3 border border-white/10 group-hover:scale-110 transition-transform flex items-center justify-center
+                                       ${pattern === p.id ? 'bg-teal-400 text-slate-900' : 'bg-white/5 text-slate-500'}`}>
+                      {p.label[0]}
                     </div>
-                    <span className="pattern-label">{p.label}</span>
+                    <span className={`text-[10px] font-black uppercase tracking-widest ${pattern === p.id ? 'text-teal-400' : 'text-slate-500'}`}>
+                      {p.label}
+                    </span>
                   </div>
                 ))}
               </div>
-
-              {/* Hidden select to ensure state is bound if needed, but visual grid handles it */}
-              <select
-                value={pattern}
-                onChange={(e) => setPattern(e.target.value)}
-                style={{ display: 'none' }}
-              >
-                <option value="standard">Standard (Z-Order)</option>
-                <option value="staggered">Staggered Classroom Style (Anti-Cheating)</option>
-                <option value="snake">Snake (S-Order)</option>
-                <option value="snake-vertical">Vertical Snake</option>
-                <option value="columnar">Columnar</option>
-                <option value="checkerboard">Checkerboard</option>
-                <option value="single">Single Seat</option>
-                <option value="alternate-rows">Alternate Rows</option>
-                <option value="hybrid">Hybrid</option>
-              </select>
             </div>
 
-            <div className="form-group">
-              <label>Master Seating File (Excel or CSV)</label>
+            <div className="bg-card backdrop-blur-xl border border-white/5 rounded-[40px] p-10 shadow-2xl">
+              <h3 className="text-white font-bold text-sm uppercase tracking-widest mb-8 flex items-center gap-3">
+                <FiUploadCloud className="text-teal-400" />
+                Data Integration
+              </h3>
               <label
                 htmlFor="fileInput"
-                className={`dropzone ${isDragging ? 'dropzone-active' : ''}`}
+                className={`relative border-2 border-dashed rounded-[32px] p-16 flex flex-col items-center justify-center transition-all cursor-pointer group
+                               ${isDragging ? 'bg-teal-500/10 border-teal-400' : 'bg-white/5 border-white/10 hover:border-teal-500/30'}`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
               >
-                <input
-                  type="file"
-                  accept=".csv, .xls, .xlsx"
-                  onChange={handleFileChange}
-                  required={!studentFile}
-                  id="fileInput"
-                  className="dropzone-input"
-                />
+                <input type="file" accept=".csv, .xls, .xlsx" onChange={handleFileChange} id="fileInput" className="hidden" />
+                <div className="w-20 h-20 bg-teal-500/10 rounded-3xl flex items-center justify-center text-teal-400 mb-6 group-hover:scale-110 transition-transform">
+                  {studentFile ? <FiFile size={40} /> : <FiUploadCloud size={40} />}
+                </div>
                 {studentFile ? (
-                  <div>
-                    <p style={{ fontSize: '2rem', marginBottom: '1rem' }}>📄</p>
-                    <p>Selected file: <strong>{studentFile.name}</strong></p>
-                    <p style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>Click to change</p>
+                  <div className="text-center">
+                    <p className="text-white font-bold mb-1">{studentFile.name}</p>
+                    <p className="text-teal-400/60 text-[10px] font-black uppercase tracking-widest">Selected Component</p>
                   </div>
                 ) : (
-                  <div>
-                    <p style={{ fontSize: '2rem', marginBottom: '1rem' }}>☁️</p>
-                    <p>Drag & drop your file here</p>
-                    <p style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>or click to browse</p>
+                  <div className="text-center">
+                    <p className="text-slate-300 font-bold mb-1 text-lg">Drop master seating plan</p>
+                    <p className="text-slate-500 text-sm">XLSX, CSV or manual input support</p>
                   </div>
                 )}
               </label>
-            </div>
-            <button type="submit" disabled={loading} style={{ width: '100%', marginTop: '1rem' }}>
-              {loading ? 'Generating Preview...' : 'Preview Seating Plan'}
-            </button>
-            {error && <p className="error">{error}</p>}
-          </form>
-        </>
-      ) : (
-        <div className="preview-container">
-          <div className="sticky-header">
-            <h3 style={{ margin: 0, fontSize: '1.5rem' }}>Preview & Edit</h3>
-            <div>
-              <button className="cancel-btn" onClick={() => setPreviewData(null)} style={{ marginRight: '10px' }}>
-                Cancel
+
+              <button
+                onClick={handlePreview}
+                disabled={loading || !studentFile}
+                className="w-full mt-10 bg-white/5 hover:bg-white/10 text-white font-black py-5 rounded-[24px] border border-white/10 hover:border-teal-500/30 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+              >
+                {loading ? 'Simulating Space...' : 'Initialize Preview Engine'}
               </button>
-              <button className="success-btn" onClick={handleDownloadPDF} disabled={loading}>
-                {loading ? 'Generating PDF...' : 'Download Final PDF'}
-              </button>
+              {error && <p className="mt-4 text-rose-400 text-xs font-bold text-center uppercase tracking-widest">{error}</p>}
             </div>
           </div>
 
-          {previewData.rooms.map((room) => {
-            const roomData = previewData.assignedData[room.name];
-            if (!roomData) return null;
+          <div className="lg:col-span-2 space-y-8">
+            <div className="bg-gradient-to-br from-teal-500/20 to-cyan-500/20 backdrop-blur-2xl border border-teal-500/20 rounded-[40px] p-10">
+              <FiInfo className="text-teal-400 mb-6" size={32} />
+              <h4 className="text-white font-serif text-2xl font-bold mb-4">Neural Allocation</h4>
+              <p className="text-slate-300 text-sm leading-relaxed mb-6 font-light">
+                Our engine automatically handles branch distribution to minimize proximity between students from the same department.
+              </p>
+              <ul className="space-y-4">
+                {[
+                  'Supports custom room naming',
+                  'Automated roll number sorting',
+                  'Real-time capacity tracking',
+                  'Manual override capability'
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-3 text-xs text-teal-300/80 font-bold tracking-wide uppercase">
+                    <div className="w-1.5 h-1.5 bg-teal-400 rounded-full shadow-[0_0_10px_#00e5c3]"></div>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-            // Calculate columns for 4-column layout
-            const pairs = roomData.pairs;
-            const numColumns = 4;
-            const rowsPerColumn = Math.ceil(pairs.length / numColumns);
-
-            // Calculate stats
-            const totalCapacity = room.rows * room.cols * 2;
-            const occupied = pairs.reduce((acc, p) => acc + (p.s1 ? 1 : 0) + (p.s2 ? 1 : 0), 0);
-            const vacant = totalCapacity - occupied;
-
-            return (
-              <div key={room.name} className="room-card">
-                {/* Header */}
-                <div className="room-header">
-                  <h2 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '0.5rem' }}>
-                    {room.college || "GALGOTIAS EDUCATIONAL INSTITUTIONS, GREATER NOIDA"}
-                  </h2>
-                  <h3 style={{ fontSize: '1rem', fontWeight: '500', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
-                    {room.exam || "1st CAE (ODD-2025-26)"}
-                  </h3>
-                  <h4 style={{ fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--primary)' }}>
-                    Seating Plan
-                  </h4>
+            <div className="p-10 border border-white/5 rounded-[40px] bg-white/[0.02]">
+              <h5 className="text-slate-500 font-black text-[10px] uppercase tracking-[0.2em] mb-4">System Status</h5>
+              <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
+                <div className="w-10 h-10 bg-teal-500/10 rounded-lg flex items-center justify-center text-teal-400">
+                  <FiCheckSquare />
                 </div>
-
-                {/* Room Info */}
-                <div className="room-stats">
-                  <span>Room: <strong>{room.name}</strong></span>
-                  <span>Students: <strong>{occupied}</strong></span>
-                  <span style={{ color: 'var(--text-muted)' }}>Capacity: {totalCapacity}</span>
-                  <span style={{ color: 'var(--secondary)' }}>Vacant: {vacant}</span>
+                <div>
+                  <p className="text-xs font-bold text-white uppercase tracking-widest">Ready</p>
+                  <p className="text-[10px] text-slate-500">Awaiting Data Core</p>
                 </div>
-
-                {/* White Board */}
-                <div className="whiteboard">
-                  WHITE BOARD
-                </div>
-
-                {/* Multi-Column Grid */}
-                <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                  {[...Array(numColumns)].map((_, colIndex) => {
-                    const startIdx = colIndex * rowsPerColumn;
-                    const endIdx = Math.min(startIdx + rowsPerColumn, pairs.length);
-                    const columnPairs = pairs.slice(startIdx, endIdx);
-
-                    if (columnPairs.length === 0) return null;
-
-                    return (
-                      <div key={colIndex} style={{ flex: '1 1 200px', minWidth: '200px' }}>
-                        <table>
-                          <thead>
-                            <tr>
-                              <th style={{ width: '40px', textAlign: 'center' }}>#</th>
-                              <th>Series 1</th>
-                              <th>Series 2</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {columnPairs.map((pair, i) => {
-                              const originalIndex = startIdx + i;
-                              return (
-                                <tr key={originalIndex}>
-                                  <td style={{ textAlign: 'center', color: 'var(--text-muted)', fontWeight: '500' }}>
-                                    {originalIndex + 1}
-                                  </td>
-                                  <td>
-                                    <input
-                                      type="text"
-                                      className="table-input"
-                                      value={pair.s1}
-                                      onChange={(e) => handleStudentChange(room.name, originalIndex, 's1', e.target.value)}
-                                    />
-                                  </td>
-                                  <td>
-                                    <input
-                                      type="text"
-                                      className="table-input"
-                                      value={pair.s2}
-                                      onChange={(e) => handleStudentChange(room.name, originalIndex, 's2', e.target.value)}
-                                    />
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Footer Summary */}
-                {roomData.summary && (
-                  <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'var(--bg-input)', borderRadius: 'var(--radius)', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-                    <strong style={{ color: 'var(--text-main)' }}>Branch Distribution: </strong>
-                    {Object.entries(roomData.summary).map(([branch, count]) => `${branch}: ${count}`).join('  |  ')}
-                  </div>
-                )}
               </div>
-            );
-          })}
+            </div>
+          </div>
+
+        </div>
+      ) : (
+        <div className="space-y-12 animate-fade-up">
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {[
+              { label: 'Total Rooms', value: previewData.rooms.length },
+              { label: 'Total Capacity', value: previewData.rooms.reduce((acc, r) => acc + (r.rows * r.cols * 2), 0) },
+              { label: 'Students Placed', value: previewData.total_students },
+              { label: 'Unallocated', value: previewData.unallocated?.length || 0 },
+            ].map((stat, i) => (
+              <div key={i} className="bg-white/5 border border-white/5 p-6 rounded-[24px] backdrop-blur-xl">
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{stat.label}</p>
+                <p className="text-2xl font-serif font-bold text-white uppercase tracking-widest leading-none">{stat.value}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid lg:grid-cols-1 gap-12">
+            {previewData.rooms.map((room) => {
+              const roomData = previewData.assignedData[room.name];
+              if (!roomData) return null;
+
+              const pairs = roomData.pairs;
+              const numColumns = 4;
+              const rowsPerColumn = Math.ceil(pairs.length / numColumns);
+
+              return (
+                <div key={room.name} className="bg-card backdrop-blur-xl border border-white/10 rounded-[48px] overflow-hidden shadow-2xl">
+
+                  <div className="bg-white/5 px-10 py-8 border-b border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div>
+                      <span className="text-teal-400 font-bold tracking-[0.2em] text-[10px] uppercase mb-1 block">Component: {room.name}</span>
+                      <h3 className="font-serif text-2xl font-bold text-white">{room.college || "Inst. Examination Cell"}</h3>
+                    </div>
+                    <div className="flex gap-8">
+                      <div>
+                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Students</p>
+                        <p className="text-white font-bold">{pairs.reduce((acc, p) => acc + (p.s1 ? 1 : 0) + (p.s2 ? 1 : 0), 0)}</p>
+                      </div>
+                      <div className="w-px h-10 bg-white/5"></div>
+                      <div>
+                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Capacity</p>
+                        <p className="text-white font-bold">{room.rows * room.cols * 2}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-10">
+                    <div className="bg-white/5 rounded-2xl p-3 text-center text-[10px] font-black tracking-[0.5em] text-cyan-400/40 uppercase mb-5 border border-white/5">
+                      White Board Area
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
+                      {[...Array(numColumns)].map((_, colIndex) => {
+                        const startIdx = colIndex * rowsPerColumn;
+                        const endIdx = Math.min(startIdx + rowsPerColumn, pairs.length);
+                        const columnPairs = pairs.slice(startIdx, endIdx);
+
+                        if (columnPairs.length === 0) return null;
+
+                        return (
+                          <div key={colIndex} className="space-y-4">
+                            <table className="w-full text-left">
+                              <thead>
+                                <tr className="border-b border-white/5 text-slate-500 text-[9px] uppercase font-black tracking-widest">
+                                  <th className="pb-3 px-2">#</th>
+                                  <th className="pb-3 px-2">S1</th>
+                                  <th className="pb-3 px-2">S2</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-white/[0.02]">
+                                {columnPairs.map((pair, i) => {
+                                  const originalIndex = startIdx + i;
+                                  return (
+                                    <tr key={originalIndex} className="group">
+                                      <td className="py-2.5 px-2 text-[10px] font-bold text-slate-700">{originalIndex + 1}</td>
+                                      <td className="py-2.5 px-2">
+                                        <input
+                                          type="text"
+                                          className="bg-transparent border-none outline-none text-[11px] text-white font-medium focus:text-teal-400 transition-colors w-full"
+                                          value={pair.s1}
+                                          onChange={(e) => handleStudentChange(room.name, originalIndex, 's1', e.target.value)}
+                                        />
+                                      </td>
+                                      <td className="py-2.5 px-2">
+                                        <input
+                                          type="text"
+                                          className="bg-transparent border-none outline-none text-[11px] text-white font-medium focus:text-cyan-400 transition-colors w-full"
+                                          value={pair.s2}
+                                          onChange={(e) => handleStudentChange(room.name, originalIndex, 's2', e.target.value)}
+                                        />
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {roomData.summary && (
+                    <div className="px-10 py-6 bg-white/[0.02] border-t border-white/5">
+                      <div className="flex flex-wrap gap-4">
+                        {Object.entries(roomData.summary).map(([branch, count]) => (
+                          <div key={branch} className="bg-white/5 px-4 py-1.5 rounded-full border border-white/5 flex items-center gap-2">
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{branch}</span>
+                            <span className="text-xs font-serif font-black text-teal-400 tracking-widest">{count}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
         </div>
       )}
     </div>

@@ -3,28 +3,34 @@ import { Link } from 'react-router-dom';
 
 const PublicNavbar = () => {
     return (
-        <nav className="w-full bg-white shadow-sm border-b border-gray-100 py-4 px-6 fixed top-0 left-0 z-50">
-            <div className="max-w-7xl mx-auto flex justify-between items-center">
+        <nav className="w-full bg-void/75 backdrop-blur-xl border-b border-white/5 py-4 px-8 fixed top-0 left-0 z-[100] h-[72px] flex items-center">
+            <div className="max-w-7xl mx-auto w-full flex justify-between items-center">
 
                 {/* Logo Area */}
-                <div className="flex items-center gap-2">
-                    <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+                <Link to="/" className="flex items-center gap-3 no-underline group">
+                    <div className="w-9 h-9 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-lg flex items-center justify-center font-serif font-black text-slate-900 text-lg shadow-[0_0_20px_rgba(0,229,195,0.4)] group-hover:scale-105 transition-transform">
+                        E
+                    </div>
+                    <span className="text-xl font-serif font-bold bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-cyan-400">
                         ExamGen
                     </span>
-                </div>
+                </Link>
 
                 {/* Nav Links */}
-                <div className="hidden md:flex items-center gap-8">
-                    <Link to="/" className="text-gray-600 hover:text-indigo-600 font-medium transition cursor-pointer no-underline">Home</Link>
-                    <Link to="/about" className="text-gray-600 hover:text-indigo-600 font-medium transition cursor-pointer no-underline">About Us</Link>
-                    <Link to="/contact" className="text-gray-600 hover:text-indigo-600 font-medium transition cursor-pointer no-underline">Contact</Link>
+                <div className="hidden md:flex items-center gap-10">
+                    <Link to="/" className="text-sm font-medium text-slate-400 hover:text-teal-400 transition-colors no-underline">Home</Link>
+                    <Link to="/about" className="text-sm font-medium text-slate-400 hover:text-teal-400 transition-colors no-underline">About Us</Link>
+                    <Link to="/contact" className="text-sm font-medium text-slate-400 hover:text-teal-400 transition-colors no-underline">Contact</Link>
                 </div>
 
                 {/* CTA Button */}
-                <div>
+                <div className="flex items-center gap-4">
+                    <button className="hidden sm:block text-sm font-semibold text-slate-400 hover:text-teal-400 transition-colors">
+                        Sign In
+                    </button>
                     <Link to="/dashboard">
-                        <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-full font-medium transition shadow-lg shadow-indigo-200">
-                            Go to Console
+                        <button className="bg-gradient-to-br from-teal-400 to-cyan-500 hover:shadow-[0_0_30px_rgba(0,229,195,0.4)] text-slate-950 px-6 py-2 rounded-full font-bold text-sm transition-all transform hover:-translate-y-0.5">
+                            Launch App →
                         </button>
                     </Link>
                 </div>

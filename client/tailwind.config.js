@@ -15,6 +15,8 @@ module.exports = {
         'fade-up': 'fadeUp 360ms ease both',
       },
       colors: {
+        void: '#03040a',
+        card: 'rgba(11, 18, 35, 0.85)',
         teal: {
           400: '#2dd4bf',
           500: '#14b8a6'
