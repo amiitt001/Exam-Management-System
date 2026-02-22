@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Icon } from '../ui';
+import { Icon } from "../ui/index";
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
   const navItems = [

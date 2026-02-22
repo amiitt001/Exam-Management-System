@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Card, Icon, Input, Btn, Badge } from "../components/ui";
+import { Card, Icon, Input, Btn, Badge } from "../components/ui/index";
 
 const ExamPaperGenerator = ({ showToast }) => {
     const [loading, setLoading] = useState(false);

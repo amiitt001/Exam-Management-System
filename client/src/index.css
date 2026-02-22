@@ -175,3 +175,13 @@ textarea::placeholder {
 code {
   font-family: 'JetBrains Mono', source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
+
+.orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(80px);
+  z-index: -1;
+  pointer-events: none;
+  background: var(--accent-blue);
+  animation: pulse 4s ease-in-out infinite;
+}

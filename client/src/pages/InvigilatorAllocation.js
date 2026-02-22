@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Card, Icon, Btn, Badge, Input } from '../ui';
+import { Card, Icon, Btn, Badge, Input } from "../components/ui/index";
 
 const InvigilatorAllocation = () => {
   const [invigilatorsText, setInvigilatorsText] = useState('');

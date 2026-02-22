@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Card, Icon, Btn, Badge } from '../ui';
+import { Card, Icon, Btn, Badge } from "../ui/index";
 
 function SeatingPlanner() {
   const [studentFile, setStudentFile] = useState(null);

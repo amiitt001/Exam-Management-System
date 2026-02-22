@@ -1,4 +1,4 @@
-import { Icon } from '../ui';
+import { Icon } from "../ui/index";
 
 const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
   const theme = {

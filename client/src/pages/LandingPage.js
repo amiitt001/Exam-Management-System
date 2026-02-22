@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Card, Icon, Btn } from '../components/ui';
+import { Card, Icon, Btn } from "../components/ui/index";
 
 const LandingPage = () => {
     const theme = {

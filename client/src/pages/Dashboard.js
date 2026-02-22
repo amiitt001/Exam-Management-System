@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, Icon, Badge } from "../components/ui";
+import { Card, Icon, Badge } from "../components/ui/index";
 
 const Dashboard = ({ papers = [], rooms = [], invigilators = [], exams = [] }) => {
   const stats = [

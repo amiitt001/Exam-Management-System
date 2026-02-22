@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, Icon, Btn, Badge } from '../ui';
+import { Card, Icon, Btn, Badge } from "../components/ui/index";
 
 const ExamSchedule = () => {
   const [loading, setLoading] = useState(false);

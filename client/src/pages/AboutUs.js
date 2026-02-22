@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Icon } from '../ui';
+import { Card, Icon } from "../components/ui/index";
 
 const AboutUs = () => {
     const theme = {

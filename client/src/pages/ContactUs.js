@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, Icon, Btn, Input } from '../ui';
+import { Card, Icon, Btn, Input } from "../components/ui/index";
 
 const ContactUs = () => {
     const theme = {
