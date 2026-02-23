@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Card, Icon, Btn, Badge } from "../ui/index";
 
 function SeatingPlanner() {
+  const normalizedApiUrl = process.env.REACT_APP_API_URL?.replace(/\/$/, '');
   const [studentFile, setStudentFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);

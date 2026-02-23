@@ -19,17 +19,24 @@ const upload = multer({ storage: storage });
 
 // Middleware
 app.use(cors({
-  origin: [
-    'https://exam-management-system-one.vercel.app',
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'http://localhost:5173'
-  ],
+  origin: (origin, callback) => {
+    // Allow if no origin (like mobile apps or curl) or if it's from vercel or localhost
+    if (!origin || /vercel\.app$/.test(origin) || /localhost:\d+$/.test(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
 app.use(express.json());
+
+// Root route for sanity check
+app.get('/', (req, res) => {
+  res.json({ status: 'server-online', message: 'Exam Management System API' });
+});
 
 // Use the routes
 app.use('/api', paperRoutes);
