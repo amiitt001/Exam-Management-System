@@ -5,13 +5,14 @@ const ThreeBackground = () => {
     const MountRef = useRef(null);
 
     useEffect(() => {
+        const currentMount = MountRef.current;
         // Scene setup
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        MountRef.current.appendChild(renderer.domElement);
+        currentMount.appendChild(renderer.domElement);
 
         // Geometries
         const particlesGeometry = new THREE.BufferGeometry();
@@ -93,8 +94,8 @@ const ThreeBackground = () => {
         return () => {
             window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('resize', handleResize);
-            if (MountRef.current) {
-                MountRef.current.removeChild(renderer.domElement);
+            if (currentMount) {
+                currentMount.removeChild(renderer.domElement);
             }
             particlesGeometry.dispose();
             particlesMaterial.dispose();
