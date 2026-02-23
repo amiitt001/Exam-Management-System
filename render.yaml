@@ -8,10 +8,12 @@ services:
     envVars:
       - key: GEMINI_API_KEY
         sync: false
-      - key: PYTHON_SERVICE_URL
-        sync: false
       - key: NODE_VERSION
         value: 18
+      - key: PYTHON_SERVICE_URL
+        value: http://exam-generator-python:5001
+      - key: USE_FIRESTORE
+        value: "true"
 
   - type: web
     name: exam-generator-python
