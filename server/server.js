@@ -18,7 +18,17 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: [
+    'https://exam-management-system-one.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:5173'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
 app.use(express.json());
 
 // Use the routes

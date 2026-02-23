@@ -46,39 +46,20 @@ function SeatingPlanner() {
 
     try {
       const formData = new FormData();
-      formData.append('file', studentFile);
-      const uploadRes = await axios.post(process.env.REACT_APP_API_URL + '/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-      const { data_id } = uploadRes.data;
-      const calcRes = await axios.post(process.env.REACT_APP_API_URL + '/calculate', { data_id, pattern });
-      const { rooms, unallocated, total_students } = calcRes.data;
+      formData.append('seatingPlanFile', studentFile);
+      formData.append('pattern', pattern);
 
-      const buildAssignedData = (processedRooms) => {
-        const assigned = {};
-        processedRooms.forEach((room) => {
-          const pairs = [];
-          const summary = {};
-          for (let r = 0; r < room.rows; r++) {
-            for (let c = 0; c < room.cols; c++) {
-              const desk = room.grid?.[r]?.[c];
-              if (!desk) continue;
-              const s1 = desk.left ? `${desk.left.roll || ''} ${desk.left.branch || ''}`.trim() : '';
-              const s2 = desk.right ? `${desk.right.roll || ''} ${desk.right.branch || ''}`.trim() : '';
-              if (s1 || s2) {
-                pairs.push({ s1, s2 });
-                const b1 = desk.left?.branch || '';
-                const b2 = desk.right?.branch || '';
-                if (b1) summary[b1] = (summary[b1] || 0) + 1;
-                if (b2) summary[b2] = (summary[b2] || 0) + 1;
-              }
-            }
-          }
-          assigned[room.name] = { pairs, summary };
-        });
-        return assigned;
-      };
+      const response = await axios.post(
+        `${process.env.REACT_APP_API_URL}/preview-seating-plan`,
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
 
-      setPreviewData({ rooms, assignedData: buildAssignedData(rooms), unallocated, total_students });
-    } catch (err) { setError(err.response?.data?.error || "Failed to generate preview."); }
+      const { rooms, unallocated, total_students, assignedData } = response.data;
+      setPreviewData({ rooms, assignedData, unallocated, total_students });
+    } catch (err) {
+      setError(err.response?.data?.message || err.response?.data?.error || "Failed to generate preview.");
+    }
     finally { setLoading(false); }
   };
 
@@ -94,8 +75,10 @@ function SeatingPlanner() {
   const handleDownloadPDF = async () => {
     setLoading(true);
     try {
-      const response = await axios.post(process.env.REACT_APP_API_URL + '/generate-pdf-from-logic', {
-        rooms: previewData.rooms, assignedData: previewData.assignedData, unallocated: previewData.unallocated || []
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/generate-pdf-from-data`, {
+        rooms: previewData.rooms,
+        assignedData: previewData.assignedData,
+        unallocated: previewData.unallocated || []
       }, { responseType: 'blob' });
       const fileURL = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
       const link = document.createElement('a');
