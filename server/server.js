@@ -35,16 +35,34 @@ app.use(express.json());
 
 // Root route for sanity check
 app.get('/', (req, res) => {
-  res.json({ status: 'server-online', message: 'Exam Management System API' });
+  res.json({
+    status: 'server-online',
+    message: 'Exam Management System API',
+    v: '1.0.1',
+    ts: '2026-02-23T13:40:00Z'
+  });
 });
 
 // Use the routes
-app.use('/api', paperRoutes);
-app.use('/api', seatingRoutes(upload)); // <-- Pass 'upload' here
+const apiRouter = express.Router();
+apiRouter.use(paperRoutes);
+apiRouter.use(seatingRoutes(upload));
+app.use('/api', apiRouter);
 
 // Lightweight health check for uptime and container diagnostics
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
+});
+
+// Catch-all diagnostic 404 for debugging
+app.use((req, res) => {
+  console.log(`[ROUTE-NOT-FOUND-DEBUG] ${req.method} ${req.url}`);
+  res.status(404).json({
+    error: "Route not found",
+    path: req.url,
+    method: req.method,
+    debug: "Check server logs for [ROUTE-NOT-FOUND-DEBUG]"
+  });
 });
 
 // Start server

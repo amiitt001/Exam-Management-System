@@ -50,8 +50,11 @@ function SeatingPlanner() {
       formData.append('seatingPlanFile', studentFile);
       formData.append('pattern', pattern);
 
+      const url = `${normalizedApiUrl}/preview-seating-plan`;
+      console.log("[DEBUG] Calling Seating Preview API:", url);
+
       const response = await axios.post(
-        `${normalizedApiUrl}/preview-seating-plan`,
+        url,
         formData,
         { headers: { 'Content-Type': 'multipart/form-data' } }
       );
