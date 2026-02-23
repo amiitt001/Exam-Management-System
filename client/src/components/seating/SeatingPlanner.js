@@ -51,7 +51,7 @@ function SeatingPlanner() {
       formData.append('pattern', pattern);
 
       const response = await axios.post(
-        `${process.env.REACT_APP_API_URL}/preview-seating-plan`,
+        `${normalizedApiUrl}/preview-seating-plan`,
         formData,
         { headers: { 'Content-Type': 'multipart/form-data' } }
       );
@@ -76,7 +76,7 @@ function SeatingPlanner() {
   const handleDownloadPDF = async () => {
     setLoading(true);
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/generate-pdf-from-data`, {
+      const response = await axios.post(`${normalizedApiUrl}/generate-pdf-from-data`, {
         rooms: previewData.rooms,
         assignedData: previewData.assignedData,
         unallocated: previewData.unallocated || []
