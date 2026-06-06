@@ -6,10 +6,13 @@ const ExamSchedule = () => {
   const [schedule, setSchedule] = useState(null);
 
   const theme = {
-    accent: "#3b82f6",
-    textSub: "#94a3b8",
-    surfaceAlt: "#1a2235",
-    textMuted: "#64748b",
+    accent: "var(--accent-blue)",
+    accentSoft: "var(--accent-blue-soft, rgba(59, 130, 246, 0.12))",
+    textSub: "var(--text-secondary)",
+    surfaceAlt: "var(--bg-surface-alt)",
+    textMuted: "var(--text-muted)",
+    border: "var(--border-subtle)",
+    surface: "var(--bg-surface)",
   };
 
   const generateSchedule = () => {
@@ -54,7 +57,7 @@ const ExamSchedule = () => {
       </div>
 
       {!schedule ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 text-white">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 text-slate-900">
           <Card className="lg:col-span-2" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 450, textAlign: 'center' }}>
             <div style={{ width: 80, height: 80, background: 'rgba(59, 130, 246, 0.05)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: theme.accent, marginBottom: 24, border: `1px solid ${theme.accent}30` }}>
               <Icon name="calendar" size={40} />
@@ -91,21 +94,21 @@ const ExamSchedule = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {schedule.map((day) => (
               <Card key={day.id} style={{ padding: 0, overflow: 'hidden' }}>
-                <div style={{ padding: '20px 24px', background: 'rgba(255,255,255,0.02)', borderBottom: `1px solid #1e2d45` }}>
+                <div style={{ padding: '20px 24px', background: 'rgba(255,255,255,0.02)', borderBottom: `1px solid ${theme.border}` }}>
                   <Badge color="blue">SESSION {day.id}</Badge>
                   <h3 style={{ fontSize: 18, fontWeight: 700, marginTop: 4 }}>{day.date}</h3>
                 </div>
                 <div style={{ padding: 24 }} className="space-y-6">
                   {day.subjects.map((sub, sIdx) => (
-                    <div key={sIdx} style={{ paddingLeft: 16, borderLeft: `2px solid #1e2d45`, position: 'relative' }}>
-                      <div style={{ position: 'absolute', left: -5, top: 4, width: 8, height: 8, background: '#1e2d45', borderRadius: '50%', border: '2px solid #0a0f1a' }} />
+                    <div key={sIdx} style={{ paddingLeft: 16, borderLeft: `2px solid ${theme.border}`, position: 'relative' }}>
+                      <div style={{ position: 'absolute', left: -5, top: 4, width: 8, height: 8, background: theme.border, borderRadius: '50%', border: `2px solid ${theme.surface}` }} />
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 4 }}>
                         <p style={{ fontWeight: 700, fontSize: 14 }}>{sub.name}</p>
                         <span style={{ fontSize: 10, fontWeight: 800, color: theme.textMuted }}>{sub.time}</span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <span style={{ fontSize: 11, fontWeight: 700, color: theme.accent }}>{sub.code}</span>
-                        <div style={{ width: 4, height: 4, background: '#1e2d45', borderRadius: '50%' }} />
+                        <div style={{ width: 4, height: 4, background: theme.border, borderRadius: '50%' }} />
                         <span style={{ fontSize: 11, fontWeight: 700, color: theme.textMuted }}>{sub.room}</span>
                       </div>
                     </div>

@@ -1,8 +1,8 @@
 import React from 'react';
 
 const theme = {
-    surface: "#111827",
-    border: "#1e2d45",
+    surface: "var(--bg-surface)",
+    border: "var(--border-subtle)",
 };
 
 const Card = ({ children, style = {} }) => (

@@ -2,13 +2,13 @@ import { Icon } from "../ui/index";
 
 const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
   const theme = {
-    surface: "#111827",
-    border: "#1e2d45",
-    accent: "#3b82f6",
-    accentSoft: "rgba(59,130,246,0.12)",
-    text: "#f1f5f9",
-    textSub: "#94a3b8",
-    success: "#10b981",
+    surface: "var(--bg-surface)",
+    border: "var(--border-subtle)",
+    accent: "var(--accent-blue)",
+    accentSoft: "var(--accent-blue-soft, rgba(59,130,246,0.12))",
+    text: "var(--text-primary)",
+    textSub: "var(--text-secondary)",
+    success: "var(--accent-teal)",
   };
 
   return (

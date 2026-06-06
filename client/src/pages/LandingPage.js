@@ -4,9 +4,10 @@ import { Card, Icon, Btn } from "../components/ui/index";
 
 const LandingPage = () => {
     const theme = {
-        accent: "#3b82f6",
-        textSub: "#94a3b8",
-        surfaceAlt: "#1a2235",
+        accent: "var(--accent-blue)",
+        textSub: "var(--text-secondary)",
+        surfaceAlt: "var(--bg-surface-alt)",
+        border: "var(--border-subtle)",
     };
 
     return (
@@ -24,7 +25,7 @@ const LandingPage = () => {
                         AI Powered Exam Generation
                     </div>
 
-                    <h1 style={{ fontSize: 'clamp(44px, 8vw, 84px)', lineHeight: 1, fontWeight: 800, color: '#fff', marginBottom: 32, letterSpacing: '-0.03em' }}>
+                    <h1 style={{ fontSize: 'clamp(44px, 8vw, 84px)', lineHeight: 1, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 32, letterSpacing: '-0.03em' }}>
                         The Future of <br />
                         <span style={{
                             background: 'linear-gradient(to right, #3b82f6, #2dd4bf)',
@@ -56,7 +57,7 @@ const LandingPage = () => {
                             <div style={{ fontSize: 10, fontWeight: 800, color: theme.textSub, textTransform: 'uppercase', letterSpacing: 1 }}>Powered</div>
                         </div>
                         <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: 32, fontWeight: 800, color: '#fff' }}>∞</div>
+                            <div style={{ fontSize: 32, fontWeight: 800, color: 'var(--text-primary)' }}>∞</div>
                             <div style={{ fontSize: 10, fontWeight: 800, color: theme.textSub, textTransform: 'uppercase', letterSpacing: 1 }}>Efficiency</div>
                         </div>
                     </div>
@@ -69,7 +70,7 @@ const LandingPage = () => {
                     <div style={{ display: 'flex', flexDirection: 'column', md: { flexDirection: 'row' }, justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 80, gap: 32 }}>
                         <div>
                             <span style={{ color: theme.accent, fontWeight: 800, fontSize: 12, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16, display: 'block' }}>Core Platform</span>
-                            <h2 style={{ fontSize: 'clamp(32px, 5vw, 48px)', fontWeight: 800, color: '#fff', lineHeight: 1.1 }}>Everything you need to <br />run exams like clockwork.</h2>
+                            <h2 style={{ fontSize: 'clamp(32px, 5vw, 48px)', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.1 }}>Everything you need to <br />run exams like clockwork.</h2>
                         </div>
                         <p style={{ color: theme.textSub, fontSize: 18, maxWidth: 440 }}>
                             A unified suite of tools designed to replace manual processes with high-precision AI automation.
@@ -106,11 +107,11 @@ const LandingPage = () => {
             </section>
 
             {/* Footer */}
-            <footer style={{ padding: '80px 24px', borderTop: '1px solid #1e2d45', background: 'rgba(0,0,0,0.2)' }}>
+            <footer style={{ padding: '80px 24px', borderTop: `1px solid ${theme.border}`, background: 'rgba(0,0,0,0.02)' }}>
                 <div className="max-w-7xl mx-auto" style={{ display: 'flex', flexDirection: 'column', md: { flexDirection: 'row' }, justifyContent: 'space-between', alignItems: 'center', gap: 40 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                         <div style={{ width: 40, height: 40, background: theme.accent, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, color: '#000', fontSize: 20 }}>E</div>
-                        <span style={{ fontSize: 24, fontWeight: 800, color: '#fff' }}>ExamGen</span>
+                        <span style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)' }}>ExamGen</span>
                     </div>
                     <p style={{ color: theme.textSub, fontSize: 14 }}>
                         &copy; 2026 ExamGen Inc. Built with AI for modern education.
@@ -127,11 +128,11 @@ const LandingPage = () => {
 
 const FeatureCard = ({ icon, title, desc, color }) => (
     <Card hover style={{ padding: 40 }}>
-        <div style={{ width: 64, height: 64, background: 'rgba(255,255,255,0.03)', borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 32, border: '1px solid rgba(255,255,255,0.05)' }}>
+        <div style={{ width: 64, height: 64, background: 'var(--bg-surface-alt)', borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 32, border: '1px solid var(--border-subtle)' }}>
             <Icon name={icon} size={32} color={color === 'blue' ? '#3b82f6' : '#2dd4bf'} />
         </div>
-        <h3 style={{ fontSize: 24, fontWeight: 700, color: '#fff', marginBottom: 16 }}>{title}</h3>
-        <p style={{ color: '#94a3b8', fontSize: 14, lineHeight: 1.6 }}>{desc}</p>
+        <h3 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>{title}</h3>
+        <p style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.6 }}>{desc}</p>
     </Card>
 );
 

@@ -3,9 +3,9 @@ import { Card, Icon, Btn, Input } from "../components/ui/index";
 
 const ContactUs = () => {
     const theme = {
-        accent: "#3b82f6",
-        textSub: "#94a3b8",
-        surfaceAlt: "#1a2235",
+        accent: "var(--accent-blue)",
+        textSub: "var(--text-secondary)",
+        surfaceAlt: "var(--bg-surface-alt)",
     };
 
     const [form, setForm] = useState({ firstName: '', lastName: '', email: '', message: '' });
@@ -16,7 +16,7 @@ const ContactUs = () => {
             <div className="max-w-6xl mx-auto">
                 <div style={{ textAlign: 'center', marginBottom: 60 }}>
                     <Badge color="blue" style={{ marginBottom: 16 }}>GET SUPPORT</Badge>
-                    <h1 style={{ fontSize: 48, fontWeight: 800, color: '#fff', marginBottom: 12 }}>
+                    <h1 style={{ fontSize: 48, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 12 }}>
                         Let's start a conversation.
                     </h1>
                     <p style={{ color: theme.textSub, fontSize: 18, max_width: 600, margin: '0 auto' }}>

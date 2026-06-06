@@ -4,23 +4,23 @@
 @import "tailwindcss/utilities";
 
 :root {
-  --bg-void: #0a0e1a;
-  --bg-deep: #070b14;
-  --bg-surface: #111827;
-  --bg-surface-alt: #1a2235;
-  --bg-card: rgba(11, 18, 35, 0.85);
+  --bg-void: #f8fafc;
+  --bg-deep: #f1f5f9;
+  --bg-surface: #ffffff;
+  --bg-surface-alt: #f1f5f9;
+  --bg-card: #ffffff;
   --accent-blue: #3b82f6;
   --accent-teal: #10b981;
-  --accent-cyan: #0af0ff;
+  --accent-cyan: #06b6d4;
   --accent-gold: #f59e0b;
   --accent-rose: #ef4444;
   --accent-purple: #8b5cf6;
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
   --text-muted: #64748b;
-  --border-subtle: #1e2d45;
+  --border-subtle: #e2e8f0;
   --border-active: rgba(59, 130, 246, 0.45);
-  --glow-blue: 0 0 40px rgba(59, 130, 246, 0.2);
+  --glow-blue: 0 0 40px rgba(59, 130, 246, 0.08);
   --radius: 16px;
 }
 
@@ -68,7 +68,7 @@ textarea,
 select {
   background-color: var(--bg-surface-alt) !important;
   border-color: var(--border-subtle) !important;
-  color: #fff !important;
+  color: var(--text-primary) !important;
   outline: none;
   font-family: 'DM Sans', sans-serif;
 }

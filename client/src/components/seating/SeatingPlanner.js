@@ -12,11 +12,12 @@ function SeatingPlanner() {
   const [pattern, setPattern] = useState('standard');
 
   const theme = {
-    accent: "#3b82f6",
-    accentSoft: "rgba(59,130,246,0.12)",
-    textSub: "#94a3b8",
-    surfaceAlt: "#1a2235",
-    textMuted: "#64748b",
+    accent: "var(--accent-blue)",
+    accentSoft: "var(--accent-blue-soft, rgba(59,130,246,0.12))",
+    textSub: "var(--text-secondary)",
+    surfaceAlt: "var(--bg-surface-alt)",
+    textMuted: "var(--text-muted)",
+    border: "var(--border-subtle)",
   };
 
   const patterns = [
@@ -121,7 +122,7 @@ function SeatingPlanner() {
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {patterns.map((p) => (
                   <div key={p.id} onClick={() => setPattern(p.id)} style={{
-                    padding: 16, borderRadius: 12, border: `1px solid ${pattern === p.id ? theme.accent : theme.surfaceAlt}`,
+                    padding: 16, borderRadius: 12, border: `1px solid ${pattern === p.id ? theme.accent : theme.border}`,
                     background: pattern === p.id ? theme.accentSoft : theme.surfaceAlt, cursor: 'pointer', transition: 'all 0.2s', textAlign: 'center'
                   }}>
                     <div style={{ color: pattern === p.id ? theme.accent : theme.textSub, fontWeight: 700, fontSize: 13 }}>{p.label}</div>
@@ -138,7 +139,7 @@ function SeatingPlanner() {
                 className={`relative border-2 border-dashed rounded-2xl p-12 flex flex-col items-center justify-center transition-all cursor-pointer 
                     ${isDragging ? 'bg-blue-500/10 border-blue-500' : 'bg-surface-alt border-border-subtle hover:border-blue-500/50'}`}
                 onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
-                style={{ background: theme.surfaceAlt, borderColor: isDragging ? theme.accent : '#1e2d45', minHeight: 180 }}
+                style={{ background: theme.surfaceAlt, borderColor: isDragging ? theme.accent : theme.border, minHeight: 180 }}
               >
                 <input type="file" accept=".csv, .xls, .xlsx" onChange={handleFileChange} className="hidden" />
                 <div style={{ width: 56, height: 56, background: theme.accentSoft, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', color: theme.accent, marginBottom: 16 }}>
@@ -216,7 +217,7 @@ function SeatingPlanner() {
 
               return (
                 <Card key={room.name} style={{ padding: 0, overflow: 'hidden' }}>
-                  <div style={{ padding: "20px 24px", borderBottom: `1px solid #1e2d45`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)' }}>
+                  <div style={{ padding: "20px 24px", borderBottom: `1px solid ${theme.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)' }}>
                     <div>
                       <Badge color="blue">{room.name}</Badge>
                       <h3 style={{ fontWeight: 700, fontSize: 18, marginTop: 4 }}>{room.college || "Inst. Examination Cell"}</h3>
@@ -249,7 +250,7 @@ function SeatingPlanner() {
                           <div key={colIndex}>
                             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                               <thead>
-                                <tr style={{ borderBottom: `1px solid #1e2d45`, fontSize: 10, color: theme.textMuted, fontWeight: 800 }}>
+                                <tr style={{ borderBottom: `1px solid ${theme.border}`, fontSize: 10, color: theme.textMuted, fontWeight: 800 }}>
                                   <th style={{ padding: '0 8px 8px 8px', textAlign: 'left' }}>#</th>
                                   <th style={{ padding: '0 8px 8px 8px', textAlign: 'left' }}>S1</th>
                                   <th style={{ padding: '0 8px 8px 8px', textAlign: 'left' }}>S2</th>
@@ -259,17 +260,17 @@ function SeatingPlanner() {
                                 {columnPairs.map((pair, i) => {
                                   const originalIndex = startIdx + i;
                                   return (
-                                    <tr key={originalIndex} style={{ borderBottom: `1px solid rgba(30, 45, 69, 0.3)` }}>
+                                    <tr key={originalIndex} style={{ borderBottom: `1px solid var(--border-subtle)` }}>
                                       <td style={{ padding: '8px', fontSize: 11, color: theme.textMuted, fontWeight: 700 }}>{originalIndex + 1}</td>
                                       <td style={{ padding: '8px' }}>
                                         <input
-                                          style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: 11, fontWeight: 500, width: '100%', outline: 'none' }}
+                                          style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: 11, fontWeight: 500, width: '100%', outline: 'none' }}
                                           value={pair.s1} onChange={(e) => handleStudentChange(room.name, originalIndex, 's1', e.target.value)}
                                         />
                                       </td>
                                       <td style={{ padding: '8px' }}>
                                         <input
-                                          style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: 11, fontWeight: 500, width: '100%', outline: 'none' }}
+                                          style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: 11, fontWeight: 500, width: '100%', outline: 'none' }}
                                           value={pair.s2} onChange={(e) => handleStudentChange(room.name, originalIndex, 's2', e.target.value)}
                                         />
                                       </td>
@@ -285,7 +286,7 @@ function SeatingPlanner() {
                   </div>
 
                   {roomData.summary && (
-                    <div style={{ padding: "16px 24px", background: 'rgba(255,255,255,0.01)', borderTop: `1px solid #1e2d45`, display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+                    <div style={{ padding: "16px 24px", background: 'rgba(255,255,255,0.01)', borderTop: `1px solid ${theme.border}`, display: 'flex', flexWrap: 'wrap', gap: 12 }}>
                       {Object.entries(roomData.summary).map(([branch, count]) => (
                         <div key={branch} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                           <span style={{ fontSize: 11, fontWeight: 800, color: theme.textMuted }}>{branch}</span>

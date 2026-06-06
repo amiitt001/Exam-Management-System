@@ -10,18 +10,18 @@ const Dashboard = ({ papers = [], rooms = [], invigilators = [], exams = [] }) =
   ];
 
   const theme = {
-    accent: "#3b82f6",
-    accentSoft: "rgba(59,130,246,0.12)",
-    purple: "#8b5cf6",
-    purpleSoft: "rgba(139,92,246,0.12)",
-    success: "#10b981",
-    successSoft: "rgba(16,185,129,0.12)",
-    warning: "#f59e0b",
-    warningSoft: "rgba(245,158,11,0.12)",
-    textSub: "#94a3b8",
-    surfaceAlt: "#1a2235",
-    textMuted: "#64748b",
-    danger: "#ef4444"
+    accent: "var(--accent-blue)",
+    accentSoft: "var(--accent-blue-soft, rgba(59,130,246,0.12))",
+    purple: "var(--accent-purple)",
+    purpleSoft: "var(--accent-purple-soft, rgba(139,92,246,0.12))",
+    success: "var(--accent-teal)",
+    successSoft: "var(--accent-teal-soft, rgba(16,185,129,0.12))",
+    warning: "var(--accent-gold)",
+    warningSoft: "var(--accent-gold-soft, rgba(245,158,11,0.12))",
+    textSub: "var(--text-secondary)",
+    surfaceAlt: "var(--bg-surface-alt)",
+    textMuted: "var(--text-muted)",
+    danger: "var(--accent-rose)"
   };
 
   const colorMap = { blue: theme.accent, purple: theme.purple, green: theme.success, yellow: theme.warning };

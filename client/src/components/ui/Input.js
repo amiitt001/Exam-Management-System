@@ -1,10 +1,10 @@
 import React from 'react';
 
 const theme = {
-    surfaceAlt: "#1a2235",
-    border: "#1e2d45",
-    text: "#f1f5f9",
-    textSub: "#94a3b8",
+    surfaceAlt: "var(--bg-surface-alt)",
+    border: "var(--border-subtle)",
+    text: "var(--text-primary)",
+    textSub: "var(--text-secondary)",
 };
 
 const Input = ({ label, value, onChange, placeholder, type = "text", options, rows }) => (

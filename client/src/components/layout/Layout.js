@@ -31,7 +31,7 @@ const Layout = ({ children }) => {
 
   // App Layout
   return (
-    <div className="flex h-screen bg-void font-sans text-slate-200 overflow-hidden">
+    <div className="flex h-screen bg-void font-sans text-slate-900 overflow-hidden">
       <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
       <div className="flex-1 flex flex-col min-w-0 relative">
         {/* Global Background Elements for App Area */}

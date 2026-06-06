@@ -12,13 +12,13 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
   ];
 
   const theme = {
-    surface: "#111827",
-    border: "#1e2d45",
-    accent: "#3b82f6",
-    accentSoft: "rgba(59,130,246,0.12)",
-    text: "#f1f5f9",
-    textSub: "#94a3b8",
-    textMuted: "#64748b",
+    surface: "var(--bg-surface)",
+    border: "var(--border-subtle)",
+    accent: "var(--accent-blue)",
+    accentSoft: "var(--accent-blue-soft, rgba(59,130,246,0.12))",
+    text: "var(--text-primary)",
+    textSub: "var(--text-secondary)",
+    textMuted: "var(--text-muted)",
   };
 
   return (

@@ -2,10 +2,10 @@ import React from 'react';
 import Icon from './Icon';
 
 const theme = {
-    surface: "#111827",
-    success: "#10b981",
-    danger: "#ef4444",
-    text: "#f1f5f9",
+    surface: "var(--bg-surface)",
+    success: "var(--accent-teal)",
+    danger: "var(--accent-rose)",
+    text: "var(--text-primary)",
 };
 
 const Toast = ({ msg, type = "success" }) => {

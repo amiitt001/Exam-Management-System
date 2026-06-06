@@ -2,9 +2,9 @@ import React from 'react';
 import Icon from './Icon';
 
 const theme = {
-    surface: "#111827",
-    border: "#1e2d45",
-    textMuted: "#64748b",
+    surface: "var(--bg-surface)",
+    border: "var(--border-subtle)",
+    textMuted: "var(--text-muted)",
 };
 
 const Modal = ({ title, onClose, children, width = 520 }) => (

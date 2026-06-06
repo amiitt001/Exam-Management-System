@@ -1,13 +1,13 @@
 import React from 'react';
 
 const theme = {
-    accent: "#3b82f6",
-    success: "#10b981",
-    successSoft: "rgba(16,185,129,0.12)",
-    danger: "#ef4444",
-    dangerSoft: "rgba(239,68,68,0.12)",
-    textSub: "#94a3b8",
-    border: "#1e2d45",
+    accent: "var(--accent-blue)",
+    success: "var(--accent-teal)",
+    successSoft: "var(--accent-teal-soft, rgba(16,185,129,0.12))",
+    danger: "var(--accent-rose)",
+    dangerSoft: "var(--accent-rose-soft, rgba(239,68,68,0.12))",
+    textSub: "var(--text-secondary)",
+    border: "var(--border-subtle)",
 };
 
 const Btn = ({ children, variant = "primary", onClick, disabled, style = {}, small }) => {

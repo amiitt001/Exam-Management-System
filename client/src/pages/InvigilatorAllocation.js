@@ -10,10 +10,11 @@ const InvigilatorAllocation = () => {
   const [error, setError] = useState(null);
 
   const theme = {
-    accent: "#3b82f6",
-    textSub: "#94a3b8",
-    surfaceAlt: "#1a2235",
-    textMuted: "#64748b",
+    accent: "var(--accent-blue)",
+    accentSoft: "var(--accent-blue-soft, rgba(59, 130, 246, 0.12))",
+    textSub: "var(--text-secondary)",
+    surfaceAlt: "var(--bg-surface-alt)",
+    textMuted: "var(--text-muted)",
   };
 
   const parseInvigilators = (text) => text.split('\n').map(s => s.trim()).filter(Boolean).map((name, i) => ({ id: `I${i + 1}`, name }));
@@ -82,7 +83,7 @@ const InvigilatorAllocation = () => {
             {error && (
               <div style={{ marginTop: 20, padding: 16, background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: 12, display: 'flex', gap: 10 }}>
                 <Icon name="info" color="#ef4444" size={18} />
-                <p style={{ fontSize: 13, color: '#fca5a5', fontWeight: 600 }}>{error}</p>
+                <p style={{ fontSize: 13, color: '#dc2626', fontWeight: 600 }}>{error}</p>
               </div>
             )}
           </Card>
@@ -93,7 +94,7 @@ const InvigilatorAllocation = () => {
           {!assignments ? (
             <Card style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: 400, color: theme.textMuted, gap: 12, borderStyle: 'dashed' }}>
               <Icon name="check" size={40} />
-              <h3 style={{ fontWeight: 700, color: '#fff' }}>Awaiting Computation</h3>
+              <h3 style={{ fontWeight: 700, color: 'var(--text-primary)' }}>Awaiting Computation</h3>
               <p style={{ maxWidth: 280, textAlign: 'center' }}>Enter the personnel and session data to generate a balanced allocation matrix.</p>
             </Card>
           ) : (
@@ -143,14 +144,14 @@ const InvigilatorAllocation = () => {
                         <div className="flex flex-wrap gap-2">
                           {s.assigned.length > 0 ? (
                             s.assigned.map(inv => (
-                              <div key={inv.id} style={{ padding: '6px 14px', background: theme.surfaceAlt, borderRadius: 10, border: '1px solid #1e2d45', fontSize: 13, fontWeight: 500 }}>
+                              <div key={inv.id} style={{ padding: '6px 14px', background: theme.surfaceAlt, borderRadius: 10, border: '1px solid var(--border-subtle)', fontSize: 13, fontWeight: 500 }}>
                                 {inv.name}
                               </div>
                             ))
                           ) : (
                             <div style={{ padding: 12, background: 'rgba(251, 146, 60, 0.05)', border: '1px solid rgba(251, 146, 60, 0.2)', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
                               <Icon name="info" color="#fb923c" size={14} />
-                              <span style={{ fontSize: 11, fontWeight: 800, color: '#fdba74', textTransform: 'uppercase' }}>Unstaffed Slot</span>
+                              <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--accent-gold)', textTransform: 'uppercase' }}>Unstaffed Slot</span>
                             </div>
                           )}
                         </div>

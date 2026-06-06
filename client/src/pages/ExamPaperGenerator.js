@@ -64,11 +64,12 @@ const ExamPaperGenerator = ({ showToast }) => {
     };
 
     const theme = {
-        textSub: "#94a3b8",
-        purple: "#8b5cf6",
-        surfaceAlt: "#1a2235",
-        textMuted: "#64748b",
-        accent: "#3b82f6"
+        textSub: "var(--text-secondary)",
+        purple: "var(--accent-purple)",
+        surfaceAlt: "var(--bg-surface-alt)",
+        textMuted: "var(--text-muted)",
+        accent: "var(--accent-blue)",
+        border: "var(--border-subtle)"
     };
 
     return (
@@ -145,25 +146,25 @@ const ExamPaperGenerator = ({ showToast }) => {
                     {!paper ? (
                         <Card style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 500, color: theme.textMuted, gap: 12, textAlign: 'center' }}>
                             <Icon name="paper" size={40} />
-                            <h3 style={{ fontWeight: 700, color: '#fff' }}>No Synthesis Active</h3>
+                            <h3 style={{ fontWeight: 700, color: 'var(--text-primary)' }}>No Synthesis Active</h3>
                             <p style={{ maxWidth: 280 }}>Configure the parameters on the left and trigger the neural engine to generate questions.</p>
                         </Card>
                     ) : (
                         <Card style={{ padding: 0, overflow: 'hidden' }}>
-                            <div style={{ padding: "20px 24px", borderBottom: `1px solid #1e2d45`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ padding: "20px 24px", borderBottom: `1px solid ${theme.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <h3 style={{ fontWeight: 700, fontSize: 17 }}>Neural Preview</h3>
                                 <Btn small variant="ghost" onClick={() => setPaper(null)}>Discard</Btn>
                             </div>
 
                             <div style={{ padding: 24, spaceY: 6, maxHeight: 600, overflow: 'auto' }} className="space-y-4">
                                 {paper.questions.map((q, i) => (
-                                    <div key={i} style={{ padding: 20, background: theme.surfaceAlt, borderRadius: 16, border: '1px solid #1e2d45' }}>
+                                    <div key={i} style={{ padding: 20, background: theme.surfaceAlt, borderRadius: 16, border: `1px solid ${theme.border}` }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
                                             <Badge color="blue">Component {i + 1}</Badge>
                                             <span style={{ fontSize: 11, color: theme.textMuted, fontWeight: 700, textTransform: 'uppercase', tracking: '1px' }}>Gemini-Refined</span>
                                         </div>
                                         <textarea
-                                            style={{ width: '100%', background: 'transparent', border: 'none', color: '#fff', fontSize: 15, lineHeight: 1.6, resize: 'none', outline: 'none' }}
+                                            style={{ width: '100%', background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: 15, lineHeight: 1.6, resize: 'none', outline: 'none' }}
                                             rows={2}
                                             value={q.question}
                                             onChange={(e) => {
@@ -176,7 +177,7 @@ const ExamPaperGenerator = ({ showToast }) => {
                                 ))}
                             </div>
 
-                            <div style={{ padding: 24, borderTop: `1px solid #1e2d45`, display: 'flex', gap: 12 }}>
+                            <div style={{ padding: 24, borderTop: `1px solid ${theme.border}`, display: 'flex', gap: 12 }}>
                                 <Btn
                                     variant="ghost"
                                     onClick={() => {
